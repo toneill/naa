@@ -1,0 +1,92 @@
+#!/bin/bash
+#Copyright 2008-2009 Christopher Smart, under GPLv3 (a copy included in COPYING)
+
+#Hi there. This script mounts an external device and rsyncs the ubuntu repository and clamav virus definitions.
+
+# Some bash things:
+# exists: -e
+# is a file: -f
+# is a directory: -d
+# returned value is not null: -n
+# is zero: -z
+# something is equal to something else: =
+# something is NOT equal to something else: != 
+# or -o
+# and -a
+
+#Specify the tmp location for success and errors.
+ERRORFILE="/tmp/mount-update-drive-error-`date +%Y%m%d%H%S%N`"
+COMPLETEFILE="/tmp/system-update-completed-`date +%Y%m%d%H%S%N`"
+
+#Specify the mount point
+MOUNTPOINT=/mnt/update-drive
+
+clear
+echo "-----------------------"
+echo "Synchronising updates.."
+rsync -a $MOUNTPOINT/data/ /data/
+
+echo "Synchronisation - SUCCESS" >> $COMPLETEFILE
+
+if [ -n "`dpkg -l |grep apache2`" -a -d "/var/www" ]
+	then
+		echo "------------------------------------"
+		echo "Updating online virus definitions.."
+		rsync -a /data/clamav/db/*cvd /var/www/
+		echo "Copy ClamAV definitions to Apache - SUCCESS" >> $COMPLETEFILE
+	else
+		echo "------------------------------------"
+		echo "Skipping antivirus update."
+		echo "Copy ClamAV definitions to Apache - SKIPPED" >> $COMPLETEFILE
+fi
+
+#Quietly update apt database
+echo "-----------------------------------------"
+echo "Updating package local package database.."
+apt-get -qq update
+echo "Update apt database - SUCCESS" >> $COMPLETEFILE
+
+#Print datestamp of virus defs
+echo "-----------------------------------------"
+echo "Checking ClamAV definitions.."
+
+if [ "`date +%Y-%m-%d`" != "`ls -l /data/clamav/db/ |grep daily.cvd |awk {'print $6'}`" ]
+	then
+		echo "Today is `date +%Y-%m-%d`."
+		echo "Latest daily.cvd is dated `ls -l /data/clamav/db/ |grep daily.cvd |awk {'print $6'}`."
+		echo "Latest main.cvd is dated `ls -l /data/clamav/db/ |grep main.cvd |awk {'print $6'}`."
+		echo "Please compare the dates."
+		echo ""
+		echo "** HIT ENTER TO CONTINUE **"
+		read
+		echo "ClamAV definitions update - CHECK DATES" >> $COMPLETEFILE
+	else
+		echo "ClamAV definitions update - SUCCESS" >> $COMPLETEFILE
+fi
+
+#If this is marlin, backup the Amanda config files
+if [ `hostname` = "marlin.dr.lan" ]
+	then
+		echo "--------------------------------"
+		echo "Backing up Amanda config files.."
+		mkdir -p $MOUNTPOINT/backup/marlin/etc/ 2>/dev/null
+		rsync -a /etc/amanda* $MOUNTPOINT/backup/marlin/etc/
+		rsync -a /usr/local/bin $MOUNTPOINT/backup/marlin/usr/local/
+		echo "--------------------------------"
+		echo "Amanda config backup - SUCCESS" >> $COMPLETEFILE
+	else
+		echo "-----------------------------"
+fi
+
+#Clean up error file
+rm $ERRORFILE 2>/dev/null
+
+#Summary of update
+echo ""
+echo "SUMMARY"
+echo "-------"
+echo "`cat $COMPLETEFILE`"
+echo ""
+
+#Clean up
+rm $COMPLETEFILE

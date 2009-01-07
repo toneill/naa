@@ -1,0 +1,98 @@
+#!/bin/bash
+#Copyright 2008-2009 Christopher Smart, under GPLv3 (a copy included in COPYING)
+
+#Hi there. This script mounts an external device and rsyncs the ubuntu repository and clamav virus definitions.
+#Actually, this is a helper script which copies the "synchronise" script so I can make changes in one location and have it propogated.
+
+# Some useful bash things:
+# exists: -e
+# is a file: -f
+# is a directory: -d
+# returned value is not null: -n
+# is zero: -z
+# something is equal to something else: =
+# something is NOT equal to something else: != 
+# or -o
+# and -a
+
+#Set file for errors
+ERRORFILE="/tmp/mount-update-drive-error-`date +%Y%m%d%H%S%N`"
+
+#Specify the mount point
+MOUNTPOINT=/mnt/update-drive
+
+#Specify the UUID of the external unit (get with `sudo vol_id -u /dev/sdXX`).
+DEVICEUUID="45b28ed7-1202-4d47-bfa9-d4a4ffa4375c"
+
+#Grab the device by UUID and convert to SCSI syntax.
+DEVICE="`ls -l /dev/disk/by-uuid/$DEVICEUUID |awk {'print $10'} |sed s/"..\/..\/"/"\/dev\/"/ 2>/dev/null`"
+echo  ""
+
+#Make sure the device is plugged in!
+if [ -n "$DEVICE" ]
+	then
+		echo "Device exists, that's a good start."
+		echo ""
+	else
+		echo ""
+		echo "Ahh.. have you plugged in the device and turned it on??" 
+		echo "Exiting."
+		echo ""
+		exit 1
+fi
+
+#Check if the mount point exists, if not, create it.
+echo "Attempting to mount external unit.."
+sleep 1
+if [ ! -e "$MOUNTPOINT" ]
+then
+	mkdir -p $MOUNTPOINT
+elif [ ! -d "$MOUNTPOINT" ]
+	then
+		echo "$MOUNTPOINT exists, but it is not a directory, please fix."
+		echo "Exiting."
+		echo ""
+		exit 1
+fi
+
+#Mount device.
+mount $DEVICE $MOUNTPOINT 2>$ERRORFILE
+
+#Check mount was successful, or exit
+if [ -n "`cat /proc/mounts |grep $DEVICE |grep $MOUNTPOINT`" ] 
+	then
+		echo "Mounted successfully."
+		echo ""
+		sleep 1
+	else
+		echo "Could not mount unit, please fix."
+		echo ""
+		echo "Error:"
+		echo "`cat $ERRORFILE`."
+		echo ""
+		echo "Exiting."
+		echo ""
+		exit
+fi
+
+cp $MOUNTPOINT/scripts/synchronise /usr/local/bin/synchronise
+chmod +x /usr/local/bin/synchronise
+/usr/local/bin/synchronise
+
+#Unmount external drive
+for x in `cat /proc/mounts |grep $DEVICE |awk {'print $2'}` ; do umount $x 2>$ERRORFILE ; done
+if [ -n "`cat /proc/mounts |grep $DEVICE`" ]
+	then
+	echo "=================================================================="
+	echo "** Could not unmount the external unit, please unmount manually **"
+	echo "=================================================================="
+	echo ""
+	echo "Error:"
+	echo "echo `cat $ERRORFILE`"
+	echo ""
+else
+	echo "=================================="
+	echo "** External unit safe to remove **"
+	echo "=================================="
+	echo ""
+fi
