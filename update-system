@@ -1,8 +1,7 @@
 #!/bin/bash
 #Copyright 2008-2009 Christopher Smart, under GPLv3 (a copy included in COPYING)
 
-#Hi there. This script mounts an external device and rsyncs the ubuntu repository and clamav virus definitions.
-#Actually, this is a helper script which copies the "synchronise" script so I can make changes in one location and have it propogated.
+#This is a helper script run from an external drive which copies and runs the "synchronise" script on the machine (so I can make changes in one location and have it propogated to all systems).
 
 # Some useful bash things:
 # exists: -e

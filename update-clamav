@@ -1,0 +1,6 @@
+#!/bin/bash
+cd /data/clamav/db/
+rm *cvd
+wget http://db.local.clamav.net/main.cvd
+wget http://db.local.clamav.net/daily.cvd
+cp *cvd /var/www/

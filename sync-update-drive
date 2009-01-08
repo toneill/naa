@@ -1,0 +1,7 @@
+#!/bin/bash
+mount /mnt/update-drive
+rsync -av /data/ /mnt/update-drive/data/
+sync
+#umount /mnt/update-drive
+#umount `cat /proc/mounts |grep 45b28ed7-1202-4d47-bfa9-d4a4ffa4375c |awk {'print $2'}`
+for x in `cat /proc/mounts |grep update-drive |awk {'print $2'}` ; do umount $x 2>$ERRORFILE ; done

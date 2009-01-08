@@ -1,0 +1,8 @@
+#!/bin/bash
+
+#This is just a script for cron job to run in order on the collaboration station.
+
+/usr/local/bin/update-deb-mirror
+/usr/local/bin/update-clamav
+/usr/local/bin/sync-update-drive
+
