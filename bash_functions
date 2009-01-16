@@ -41,7 +41,7 @@ sendhome() {
         echo "ERROR, You must pass a file"
     else
         src="$1"
-    rsync -a $src $HOME_URL:$dpath   
+    scp $src $HOME_URL:$dpath   
     fi
 }
 
