@@ -6,13 +6,16 @@
 cd /data/debs
 
 #Ubuntu 64bit only - hardy, intrepid
-debmirror --nosource --passive --host=mirror.internode.on.net --root=:ubuntu --method=rsync --progress --dist=intrepid,intrepid-updates,intrepid-security,hardy,hardy-updates,hardy-security --section=main/debian-installer,main/dist-upgrader-all,main,multiverse,restricted,universe --arch=amd64 ubuntu/ --ignore-release-gpg
+debmirror --ignore-small-errors --nosource --passive --host=mirror.internode.on.net --root=:ubuntu --method=rsync --progress --dist=intrepid,intrepid-updates,intrepid-security,hardy,hardy-updates,hardy-security --section=main/debian-installer,main/dist-upgrader-all,main,multiverse,restricted,universe --arch=amd64 ubuntu/ --ignore-release-gpg
 
 #Non-official updated clamav packages for Ubuntu
-debmirror --nosource --passive --host=ppa.launchpad.net --root=ubuntu-clamav/ubuntu --method=http --progress --dist=intrepid,hardy --section=main,multiverse,restricted,universe --arch=amd64 ubuntu-clamav/ --ignore-release-gpg
+debmirror --ignore-small-errors --nosource --passive --host=ppa.launchpad.net --root=ubuntu-clamav/ubuntu --method=http --progress --dist=intrepid,hardy --section=main,multiverse,restricted,universe --arch=amd64 ubuntu-clamav/ --ignore-release-gpg
 
 #Non-official updates OpenOffice.org packages for Ubuntu
-debmirror --nosource --passive --host=ppa.launchpad.net --root=openoffice-pkgs/ubuntu --method=http --progress --dist=intrepid,hardy --section=main,multiverse,restricted,universe --arch=amd64 ubuntu-OOo/ --ignore-release-gpg
+debmirror --ignore-small-errors --nosource --passive --host=ppa.launchpad.net --root=openoffice-pkgs/ubuntu --method=http --progress --dist=intrepid,hardy --section=main,multiverse,restricted,universe --arch=amd64 ubuntu-OOo/ --ignore-release-gpg
+
+#DRBL mirror for clonezilla
+debmirror --ignore-small-errors --nosource --passive --host=drbl.sourceforge.net --root=drbl-core --method=http --progress --dist=drbl --section=stable --arch=amd64 drbl/ --ignore-release-gpg
 
 #Debian
 #debmirror --nosource --passive --host=mirror.internode.on.net --root=:debian --method=rsync --progress --dist=lenny,sid --section=main,contrib,non-free --arch=amd64 debian/ --ignore-release-gpg

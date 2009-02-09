@@ -1,0 +1,43 @@
+#!/bin/bash                                                                                       
+#                                                                                                 
+# Michael Carden <mike.carden@gmail.com> 22 August 2007                                           
+# Fixed up by Chris :-)
+#                                                                                                 
+# local-iptables-rules                                                                            
+#                                                                                                 
+# Simple iptables rule set intended to permit ssh and http                                        
+# while excluding everything else.                                                                
+#                                                                                                 
+#                                                                                                 
+# Flush the rules                                                                                 
+iptables -F                                                                                       
+
+# Set all chains to drop by default
+iptables -P INPUT DROP
+iptables -P FORWARD DROP
+iptables -P OUTPUT DROP
+
+# Don't interfere with local traffic
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A OUTPUT -o lo -j ACCEPT
+
+# Permit established connections to continue
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# Permit ssh and http and access from anywhere
+iptables -A INPUT -p tcp -s 0/0 --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A INPUT -p tcp -s 0/0 --dport 80 -m state --state NEW,ESTABLISHED -j ACCEPT
+
+# Permit ssh and http to respond
+iptables -A OUTPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -p tcp --sport 80 -m state --state ESTABLISHED -j ACCEPT
+
+# Permit locally generated outgoing mail
+iptables -A OUTPUT -p tcp -s 0/0 --dport 25 -m state --state NEW,ESTABLISHED -j ACCEPT
+
+# Permit locally generated dns requests
+iptables -A OUTPUT -p tcp -s 0/0 --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -p udp -s 0/0 --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT
+
+# List the new iptables rules
+iptables -L

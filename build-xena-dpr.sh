@@ -27,17 +27,22 @@ cp -iv $SCRIPTLOC/ReprocessingJobImporter.java $BUILDLOC/source-$DATE/dpr/src/au
 # Build Xena
 echo "Building Xena.."
 cd xena
-ant &>/dev/null
-ant -f build_plugins.xml &>/dev/null
+#ant &>/dev/null
+#ant -f build_plugins.xml &>/dev/null
+ant
+ant -f build_plugins.xml
 
 # Build DPR
 echo "Building DPR.."
 cd ../dpr
-ant init &>/dev/null
-ant dist &>/dev/null
+#ant init &>/dev/null
+#ant dist &>/dev/null
+ant init
+ant dist
 
 #Building fake-bridge
 cd ../fake-bridge
+ant
 ant &>/dev/null
 
 # Compile dist
