@@ -60,8 +60,8 @@ def generateReport():
 	send_email(email_from, email_to, email_subject, email_msg, email_attachments, email_server)
 
 def processLine(failLine):
-#	if DEBUG:
-#		print failLine
+	if DEBUG:
+		print failLine
 	if failLine.find("FAILED") > -1  and failLine.find("[junit]") > -1:
 		#found a failure so add it and the path to the test log to the map.
 	        filename = "TEST-%s.txt" % (failLine.split()[-2])
