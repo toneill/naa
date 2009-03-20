@@ -1,15 +1,18 @@
 #!/bin/bash
 
-#DEBUG
-# on = 1
-# off = 0
-DEBUG=0
+#Constants
+TRUE=1
+FALSE=0
 
-DATE=`date +%y%m%d%H%M`
+#DEBUG
+DEBUG=$TRUE
+ACTIVATE_CO_HACK=$TRUE
+
 BUILDLOC="/home/dpuser/build/"
 SCRIPTLOC="/home/dpuser/scripts/"
 PROCESSING_SCRIPT="$SCRIPTLOC/python/processUnitTests.py"
 DPR_TEST_RESULTS_LOC="$BUILDLOC/dpr/dist/results/"
+LAST_RUN_FILE="/home/dpuser/.last"
 
 if [ -n "$1" ]
 then
@@ -33,12 +36,29 @@ function runCmd() {
 	fi
 }
 
+#Clear the last run file and add a heading
+echo "Run DPR Tests" > $LAST_RUN_FILE
+echo "=============" >> $LAST_RUN_FILE
+
+# Write the last run time to ~/.last
+echo "Started: `date`" >> ~/.last
+
+# If the ACTIVATE_CO_HACK is true then delete the BUILDLOC so everything will need to be checked out fresh.
+# There seems to be some issues when a CVS update seems to break the build process. A fresh check out 
+# seems to always build fine.
+if [ $ACTIVATE_CO_HACK == $TRUE ]
+then
+	echo "=============== Checkout Hack Activated ==============="
+	echo "Removing '$BUILDLOC' and it contents!!!!!!"
+	rm -Rfv $BUILDLOC
+	echo "=============== Checkout Hack Complete ================"
+
+	echo "== Checkout Hack Activated ==" >> $LAST_RUN_FILE
+fi 
+
 # Directory structure
 mkdir $BUILDLOC &>/dev/null
 cd $BUILDLOC
-
-# Write the last run time to ~/.last
-echo "`date`" > ~/.last
 
 function updateXena() {
 	if [ -e xena ]
@@ -123,5 +143,8 @@ cd ..
 # Run the DPR tests.
 echo "Running DPR Tests.."
 cd dpr
-runCmd "ant $DPR_TEST_TARGET 2>&1 | $PROCESSING_SCRIPT $DPR_TEST_RESULTS_LOC"
+ant $DPR_TEST_TARGET 2>&1 | $PROCESSING_SCRIPT $DPR_TEST_RESULTS_LOC
 checkFailed "Failed to run the DPR tests." $?
+
+#Append the finish date to last run file
+echo "Finished: `date`" >> ~/.last

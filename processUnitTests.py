@@ -24,7 +24,7 @@ BUILD_FAILED = "BUILD FAILED"
 
 #EMAIL SETTINGS
 email_from = "matthew.oliver@naa.gov.au"
-email_to = ["matthew.oliver@naa.gov.au"]
+email_to = ["matthew.oliver@naa.gov.au","michael.carden@naa.gov.au"]
 email_subject = "DPR unit test failure report"
 email_server = "localhost"
 
