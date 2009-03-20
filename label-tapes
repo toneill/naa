@@ -1,0 +1,63 @@
+#!/bin/bash
+
+#Set amanda conf
+CONF="backup"
+
+#Get changer device
+DEV=`cat /etc/amanda/$CONF/amanda.conf  |grep ^changerdev |awk -F "\"" {'print $2'}`
+
+#Setup log location
+if [ ! -d /var/log/label-tapes ]
+then
+	echo "/var/log/label-tapes/ does not exist, using /tmp for log files."
+	echo "Please create writable /var/log/label-tapes/ directory."
+	echo ""
+	LOG="/tmp/label-tapes-`date +%F-%H:%M`.log"
+else
+echo ""
+LOG="/var/log/label-tapes/`date +%F-%H:%M`.log"
+fi
+
+#Check to see if labeltapes file exists
+if [ ! -e /etc/amanda/$CONF/tapelist ]
+then touch /etc/amanda/$CONF/tapelist
+fi
+
+#Initialise logs, overwriting any others from same day
+echo "Log for 'label-tapes' which writes amanda labels to tapes in library." > $LOG
+
+#Check to see if any tapes are in the drive. If so, unload them.
+if [ -n "`mtx -f $DEV status |grep "VolumeTag" |grep "Data Transfer Element"`" ]
+then
+	echo "Media detected in drive, unloading."
+	mtx -f $DEV unload 2>/dev/null
+	echo ""
+fi
+
+#Label tapes
+echo "Everything looks good."
+echo "Started labeling at `date +%r`"
+echo ""
+
+for x in `mtx -f $DEV status |grep -v CLN |grep VolumeTag |awk -F "Storage Element " {'print $2'} |sed s/':Full :VolumeTag='/'-'/g`
+do
+	echo "" >> $LOG
+	echo "Labeling `echo $x |awk -F "-" {'print $2'}` from slot `echo $x |awk -F "-" {'print $1'}`"
+	amlabel -f $CONF `echo $x |awk -F "-" {'print $2'}` slot `echo $x |awk -F "-" {'print $1'}` 1>>$LOG 2>>$LOG
+	cat $LOG |grep `echo $x |awk -F "-" {'print $2'}`
+	echo ""
+done
+
+#Populate amanda's tape database
+#amtape $CONF update
+
+#Reset amtape
+echo "Resetting library to use first tape."
+cd /etc/amanda/$CONF/
+/usr/lib/amanda/chg-zd-mtx -reset 1>/dev/null 2>/dev/null
+cd
+echo ""
+
+#Complete
+echo "Labeling completed at `date +%r`."
+echo ""

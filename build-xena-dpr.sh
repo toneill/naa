@@ -22,7 +22,7 @@ cvs -z3 -d:extssh:csmart@dpr.cvs.sourceforge.net:/cvsroot/dpr co -r dpr_redesign
 
 
 #Bypass up MANIFEST.MF issue
-cp -iv $SCRIPTLOC/ReprocessingJobImporter.java $BUILDLOC/source-$DATE/dpr/src/au/gov/naa/digipres/dpr/core/importexport/ReprocessingJobImporter.java
+#cp -iv $SCRIPTLOC/ReprocessingJobImporter.java $BUILDLOC/source-$DATE/dpr/src/au/gov/naa/digipres/dpr/core/importexport/ReprocessingJobImporter.java
 
 # Build Xena
 echo "Building Xena.."
@@ -32,6 +32,10 @@ cd xena
 ant
 ant -f build_plugins.xml
 
+echo ""
+echo "Complete. Hit enter to continue."
+read
+
 # Build DPR
 echo "Building DPR.."
 cd ../dpr
@@ -40,10 +44,18 @@ cd ../dpr
 ant init
 ant dist
 
+echo ""
+echo "Complete. Hit enter to continue."
+read
+
 #Building fake-bridge
 cd ../fake-bridge
 ant
-ant &>/dev/null
+#ant &>/dev/null
+
+echo ""
+echo "Complete. Hit enter to continue."
+read
 
 # Compile dist
 echo "Gathering binaries.."
@@ -51,7 +63,7 @@ cd $BUILDLOC
 cp -a source-$DATE/dpr/dist ./dist-$DATE
 cp -a source-$DATE/fake-bridge/dist/* ./dist-$DATE
 cp -a source-$DATE/xena/dist/* ./dist-$DATE
-chmod a+x $BUILDLOC/dist-$DATE/*sh
+chmod a+x dist-$DATE/*sh
 
 #Cleanup CVS junk
 rm -Rf `find $BUILDLOC/dist-$DATE -name CVS*`
