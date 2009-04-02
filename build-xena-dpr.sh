@@ -53,6 +53,11 @@ cd ../fake-bridge
 ant
 #ant &>/dev/null
 
+#Building checksum-checker
+cd ../RollingChecker
+ant
+#ant &>/dev/null
+
 echo ""
 echo "Complete. Hit enter to continue."
 read

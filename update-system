@@ -14,18 +14,32 @@
 # or -o
 # and -a
 
-#Set file for errors
-ERRORFILE="/tmp/mount-update-drive-error-`date +%Y%m%d%H%S%N`"
+#Setting variables - we are exporting them so that they will also exist in the 'synchronise' script, which is called by this one.
+
+#Version of Debian/Ubuntu for servers
+export DISTRO=intrepid
+
+#Set file for errors and completion status
+export ERRORFILE="/tmp/mount-update-drive-error-`date +%Y%m%d%H%M`"
+export COMPLETEFILE="/tmp/system-update-completed-`date +%Y%m%d%H%M`"
 
 #Specify the mount point
-MOUNTPOINT=/mnt/update-drive
+export MOUNTPOINT=/mnt/update-drive
 
 #Specify the UUID of the external unit (get with `sudo vol_id -u /dev/sdXX`).
-DEVICEUUID="45b28ed7-1202-4d47-bfa9-d4a4ffa4375c"
+export DEVICEUUID="45b28ed7-1202-4d47-bfa9-d4a4ffa4375c"
 
 #Grab the device by UUID and convert to SCSI syntax.
-DEVICE="`ls -l /dev/disk/by-uuid/$DEVICEUUID |awk {'print $10'} |sed s/"..\/..\/"/"\/dev\/"/ 2>/dev/null`"
+export DEVICE="`ls -l /dev/disk/by-uuid/$DEVICEUUID |awk {'print $10'} |sed s/"..\/..\/"/"\/dev\/"/ 2>/dev/null`"
 echo  ""
+
+if [ -n "$1" ]
+then
+	if [ `echo $1` = "new" ]
+	then
+		export STATUS=new
+	fi
+fi
 
 #Make sure the device is plugged in!
 if [ -n "$DEVICE" ]
@@ -74,14 +88,31 @@ if [ -n "`cat /proc/mounts |grep $DEVICE |grep $MOUNTPOINT`" ]
 		exit
 fi
 
+cp $MOUNTPOINT/scripts/update-system /usr/local/bin/update-system
 cp $MOUNTPOINT/scripts/synchronise /usr/local/bin/synchronise
+chmod +x /usr/local/bin/update-system
 chmod +x /usr/local/bin/synchronise
+
+#Run the synchronise script to do the actual copying
 /usr/local/bin/synchronise
 
+#Unset variables
+for x in DISTRO ERRORFILE COMPLETEFILE MOUNTPOINT DEVICEUUID DEVICE
+do unset $x
+done
+
 #Unmount external drive
-for x in `cat /proc/mounts |grep $DEVICE |awk {'print $2'}` ; do umount $x 2>$ERRORFILE ; done
-if [ -n "`cat /proc/mounts |grep $DEVICE`" ]
-	then
+
+while [ -n "`grep $DEVICE /proc/mounts`" ]
+do
+	for x in `grep $DEVICE /proc/mounts |awk {'print $2'}`
+	do
+		umount $x 2>$ERRORFILE
+	done
+done
+
+if [ -n "`grep $DEVICE /proc/mounts`" ]
+then
 	echo "=================================================================="
 	echo "** Could not unmount the external unit, please unmount manually **"
 	echo "=================================================================="
@@ -95,3 +126,4 @@ else
 	echo "=================================="
 	echo ""
 fi
+

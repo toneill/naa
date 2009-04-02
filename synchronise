@@ -14,17 +14,61 @@
 # or -o
 # and -a
 
-#Specify the tmp location for success and errors.
-ERRORFILE="/tmp/mount-update-drive-error-`date +%Y%m%d%H%S%N`"
-COMPLETEFILE="/tmp/system-update-completed-`date +%Y%m%d%H%S%N`"
+if [ -z "`ps ax |grep [u]pdate-system`" ]
+then
+	echo "Do not run this script directly, it is called by 'update-system'"
+	echo "Exiting"
+	exit 1
+fi
 
-#Specify the mount point
-MOUNTPOINT=/mnt/update-drive
+#Variables should exist in the shell as they were exported by the 'update-system' script
+
+#Check if this is a new install
+if [ "$STATUS" = "new" ]
+then
+	echo "Looks like you want to set up a new server, let's do it.."
+	sleep 2
+	#Install apache
+	if [ -z "`dpkg -l |grep apache2`" ]
+		then apt-get -qq install apache2
+	fi
+	#Set up deb archive links for clients
+	mkdir -p /var/www 2>/dev/null
+	cd /var/www/
+	for x in `ls $MOUNTPOINT/data/debs`
+	do
+		ln -sf /data/debs/$x
+	done
+	#Add update drive to fstab
+	if [ -z "`grep $DEVICE /etc/fstab`" ]
+	then
+		echo "$DEVICE $MOUNTPOINT auto noauto,noatime 0 0" >> /etc/fstab
+	fi
+	#set up sources.lst
+	if [ -z "`grep "/data/debs/" /etc/apt/sources.list`" ]
+	then
+		echo "deb file:///data/debs/ubuntu $DISTRO main restricted universe multiverse" > /etc/apt/sources.list
+		echo "deb file:///data/debs/ubuntu $DISTRO-updates main restricted universe multiverse" >> /etc/apt/sources.list
+		echo "deb file:///data/debs/ubuntu $DISTRO-security main restricted universe multiverse" >> /etc/apt/sources.list
+	fi
+	apt-get -qq install bind9 vim postfix htop logwatch dovecot-imap dovecot-common postgresql-8.3 nfs-kernel-server
+
+	#set syntax and jump in vimrc (use sed?)
+	#set bash colours
+	#set up ssh keys
+	#create dpuser and add groups
+	#configure nfs
+	#set up /etc/hosts localhost to point to fqdn 
+	#configure dns
+
+
+	echo "Setting up first time server - SUCCESS" >> $COMPLETEFILE
+fi
 
 clear
 echo "-----------------------"
 echo "Synchronising updates.."
-rsync -a $MOUNTPOINT/data/ /data/
+rsync -a $MOUNTPOINT/data /
 
 echo "Synchronisation - SUCCESS" >> $COMPLETEFILE
 
