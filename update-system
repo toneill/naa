@@ -14,6 +14,16 @@
 # or -o
 # and -a
 
+if [ "$UID" != "0" ]
+then
+	echo ""
+	echo "You must run this as root, prepend sudo."
+	echo "Exiting."
+	echo ""
+	exit 1
+fi
+
+
 #Setting variables - we are exporting them so that they will also exist in the 'synchronise' script, which is called by this one.
 
 #Version of Debian/Ubuntu for servers
@@ -27,7 +37,7 @@ export COMPLETEFILE="/tmp/system-update-completed-`date +%Y%m%d%H%M`"
 export MOUNTPOINT=/mnt/update-drive
 
 #Specify the UUID of the external unit (get with `sudo vol_id -u /dev/sdXX`).
-export DEVICEUUID="45b28ed7-1202-4d47-bfa9-d4a4ffa4375c"
+export DEVICEUUID="9c15b64f-d797-4ea2-a47b-86d69bd71d62"
 
 #Grab the device by UUID and convert to SCSI syntax.
 export DEVICE="`ls -l /dev/disk/by-uuid/$DEVICEUUID |awk {'print $10'} |sed s/"..\/..\/"/"\/dev\/"/ 2>/dev/null`"
@@ -37,11 +47,18 @@ if [ -n "$1" ]
 then
 	if [ `echo $1` = "new" ]
 	then
-		export STATUS=new
+		export STATUS="new"
 	fi
 fi
 
 #Make sure the device is plugged in!
+if [ -n "$DEVICE" ]
+	then
+		echo "Can't find device, trying again in 5 seconds..."
+		echo ""
+		sleep 5
+fi
+
 if [ -n "$DEVICE" ]
 	then
 		echo "Device exists, that's a good start."

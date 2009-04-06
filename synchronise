@@ -51,8 +51,12 @@ then
 		echo "deb file:///data/debs/ubuntu $DISTRO-updates main restricted universe multiverse" >> /etc/apt/sources.list
 		echo "deb file:///data/debs/ubuntu $DISTRO-security main restricted universe multiverse" >> /etc/apt/sources.list
 	fi
+	update-rc.d -f apparmor remove && /etc/init.d/apparmor stop
+	echo "Installing services.."
 	apt-get -qq install bind9 vim postfix htop logwatch dovecot-imap dovecot-common postgresql-8.3 nfs-kernel-server
+	echo "Installation complete, configuring system.."
 
+#	sed -i s/hello/hi/g test1
 	#set syntax and jump in vimrc (use sed?)
 	#set bash colours
 	#set up ssh keys
