@@ -23,27 +23,20 @@ fi
 
 #Variables should exist in the shell as they were exported by the 'update-system' script
 
+
+clear
+echo "-----------------------"
+echo "Synchronising updates.."
+rsync -a $MOUNTPOINT/data /
+
+echo "Synchronisation - SUCCESS" >> $COMPLETEFILE
+
 #Check if this is a new install
 if [ "$STATUS" = "new" ]
 then
 	echo "Looks like you want to set up a new server, let's do it.."
 	sleep 2
-	#Install apache
-	if [ -z "`dpkg -l |grep apache2`" ]
-		then apt-get -qq install apache2
-	fi
-	#Set up deb archive links for clients
-	mkdir -p /var/www 2>/dev/null
-	cd /var/www/
-	for x in `ls $MOUNTPOINT/data/debs`
-	do
-		ln -sf /data/debs/$x
-	done
-	#Add update drive to fstab
-	if [ -z "`grep $DEVICE /etc/fstab`" ]
-	then
-		echo "$DEVICE $MOUNTPOINT auto noauto,noatime 0 0" >> /etc/fstab
-	fi
+
 	#set up sources.lst
 	if [ -z "`grep "/data/debs/" /etc/apt/sources.list`" ]
 	then
@@ -51,9 +44,33 @@ then
 		echo "deb file:///data/debs/ubuntu $DISTRO-updates main restricted universe multiverse" >> /etc/apt/sources.list
 		echo "deb file:///data/debs/ubuntu $DISTRO-security main restricted universe multiverse" >> /etc/apt/sources.list
 	fi
+	apt-get -qq update
+
+	#Install apache
+	echo "Installing web server and configuring Linux repository.."
+	apt-get -qq install apache2
+
+	#Set up deb archive links for clients
+	cd /var/www/
+	for x in `ls $MOUNTPOINT/data/debs`
+	do
+		ln -sf /data/debs/$x
+	done
+
+	#Add update drive to fstab
+	if [ -z "`grep $DEVICE /etc/fstab`" ]
+	then
+		echo "$DEVICE $MOUNTPOINT auto noauto,noatime 0 0" >> /etc/fstab
+	fi
 	update-rc.d -f apparmor remove && /etc/init.d/apparmor stop
 	echo "Installing services.."
-	apt-get -qq install bind9 vim postfix htop logwatch dovecot-imap dovecot-common postgresql-8.3 nfs-kernel-server
+	apt-get -qq install bind9 vim postfix htop logwatch dovecot-imap dovecot-common postgresql-8.3 nfs-kernel-server bash-completion
+
+	#Postfix changes
+	echo "`dnsdomainname`" > /etc/mailname
+	sed -i s/#myorigin/myorigin/g /etc/postfix/main.cf
+	sed -i s/mydestination\ =/mydestination\ =\ `dnsdomainname`,/g /etc/postfix/main.cf
+	sed -i s/mynetworks\ =/mynetworks\ =\ $NETWORK\\/24,/g /etc/postfix/main.cf
 	echo "Installation complete, configuring system.."
 
 #	sed -i s/hello/hi/g test1
@@ -64,18 +81,13 @@ then
 	#configure nfs
 	#set up /etc/hosts localhost to point to fqdn 
 	#configure dns
+	#configure sudo to run update-system without password
 
 
 	echo "Setting up first time server - SUCCESS" >> $COMPLETEFILE
 fi
 
-clear
-echo "-----------------------"
-echo "Synchronising updates.."
-rsync -a $MOUNTPOINT/data /
-
-echo "Synchronisation - SUCCESS" >> $COMPLETEFILE
-
+#Update antivirus definitions
 if [ -n "`dpkg -l |grep apache2`" -a -d "/var/www" ]
 	then
 		echo "------------------------------------"
@@ -97,12 +109,12 @@ echo "Update apt database - SUCCESS" >> $COMPLETEFILE
 #Print datestamp of virus defs
 echo "-----------------------------------------"
 echo "Checking ClamAV definitions.."
-
-if [ "`date +%Y-%m-%d`" != "`ls -l /data/clamav/db/ |grep daily.cvd |awk {'print $6'}`" ]
+#Testing if the date on the ClamAV definitions are less than three days old. If so, good. If not, print check.
+if [ `stat -c %Y /data/clamav/db/daily.cvd` -lt `date +%s --date "2 days ago"` ]
 	then
 		echo "Today is `date +%Y-%m-%d`."
-		echo "Latest daily.cvd is dated `ls -l /data/clamav/db/ |grep daily.cvd |awk {'print $6'}`."
-		echo "Latest main.cvd is dated `ls -l /data/clamav/db/ |grep main.cvd |awk {'print $6'}`."
+		echo "Latest daily.cvd is dated `stat -c %Y /data/clamav/db/daily.cvd |awk {'print $1'}`."
+		echo "Latest main.cvd is dated `stat -c %Y /data/clamav/db/main.cvd |awk {'print $1'}`."
 		echo "Please compare the dates."
 		echo ""
 		echo "** HIT ENTER TO CONTINUE **"
@@ -113,7 +125,7 @@ if [ "`date +%Y-%m-%d`" != "`ls -l /data/clamav/db/ |grep daily.cvd |awk {'print
 fi
 
 #If this is marlin, backup the Amanda config files
-if [ `hostname` = "marlin.dr.lan" ]
+if [ `hostname -f` = "marlin.dr.lan" ]
 	then
 		echo "--------------------------------"
 		echo "Backing up Amanda config files.."
@@ -126,8 +138,8 @@ if [ `hostname` = "marlin.dr.lan" ]
 		echo "-----------------------------"
 fi
 
-#Clean up error file
-rm $ERRORFILE 2>/dev/null
+#Clean up error file - keeping these as logs now
+#rm $ERRORFILE 2>/dev/null
 
 #Summary of update
 echo ""
@@ -136,5 +148,5 @@ echo "-------"
 echo "`cat $COMPLETEFILE`"
 echo ""
 
-#Clean up
-rm $COMPLETEFILE
+#Clean up - keeping these as logs now
+#rm $COMPLETEFILE

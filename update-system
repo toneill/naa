@@ -29,9 +29,12 @@ fi
 #Version of Debian/Ubuntu for servers
 export DISTRO=intrepid
 
+#Set higher priority for installing packages in Debian so we aren't prompted
+export DEBIAN_PRIORITY=critical
+
 #Set file for errors and completion status
-export ERRORFILE="/tmp/mount-update-drive-error-`date +%Y%m%d%H%M`"
-export COMPLETEFILE="/tmp/system-update-completed-`date +%Y%m%d%H%M`"
+export ERRORFILE="/var/log/mount-update-drive-error-`date +%Y%m%d%H%M`"
+export COMPLETEFILE="/var/log/system-update-completed-`date +%Y%m%d%H%M`"
 
 #Specify the mount point
 export MOUNTPOINT=/mnt/update-drive
@@ -43,6 +46,8 @@ export DEVICEUUID="9c15b64f-d797-4ea2-a47b-86d69bd71d62"
 export DEVICE="`ls -l /dev/disk/by-uuid/$DEVICEUUID |awk {'print $10'} |sed s/"..\/..\/"/"\/dev\/"/ 2>/dev/null`"
 echo  ""
 
+export NETWORK=`ifconfig eth0 |grep "inet addr" |grep -v 127.0.0.1 |awk -F ":" {'print $3'} |awk {'print $1'} |sed s/255/0/g`
+
 if [ -n "$1" ]
 then
 	if [ `echo $1` = "new" ]
@@ -52,11 +57,11 @@ then
 fi
 
 #Make sure the device is plugged in!
-if [ -n "$DEVICE" ]
+if [ ! -n "$DEVICE" ]
 	then
-		echo "Can't find device, trying again in 5 seconds..."
+		echo "Can't find device, trying again in 10 seconds..."
 		echo ""
-		sleep 5
+		sleep 10
 fi
 
 if [ -n "$DEVICE" ]
@@ -113,11 +118,6 @@ chmod +x /usr/local/bin/synchronise
 #Run the synchronise script to do the actual copying
 /usr/local/bin/synchronise
 
-#Unset variables
-for x in DISTRO ERRORFILE COMPLETEFILE MOUNTPOINT DEVICEUUID DEVICE
-do unset $x
-done
-
 #Unmount external drive
 
 while [ -n "`grep $DEVICE /proc/mounts`" ]
@@ -143,4 +143,9 @@ else
 	echo "=================================="
 	echo ""
 fi
+
+#Unset variables
+for x in COMPLETEFILE DEBIAN_PRIORITY DEVICE DEVICEUUID DISTRO ERRORFILE MOUNTPOINT NETWORK
+do unset $x
+done
 
