@@ -23,20 +23,32 @@ fi
 
 #Variables should exist in the shell as they were exported by the 'update-system' script
 
-
 clear
-echo "-----------------------"
-echo "Synchronising updates.."
-rsync -a $MOUNTPOINT/data /
-
-echo "Synchronisation - SUCCESS" >> $COMPLETEFILE
 
 #Check if this is a new install
 if [ "$STATUS" = "new" ]
 then
+	clear
+	echo "---------------------------------------------------------"
 	echo "Looks like you want to set up a new server, let's do it.."
 	sleep 2
 
+	echo "----------------------------------------------------"
+	echo "Synchronising updates (this will take a long time).."
+	rsync -a $MOUNTPOINT/data /
+
+	if [ $? == 0 ]
+	then
+		echo "Synchronisation - SUCCESS" >> $COMPLETEFILE
+	else
+		echo "----------------------------------------"
+		echo "Synchronisation didn't succeed, exiting."
+		echo ""
+		exit 1
+	fi
+
+	echo "---------------------------"
+	echo "Updating operating system.."
 	#set up sources.lst
 	if [ -z "`grep "/data/debs/" /etc/apt/sources.list`" ]
 	then
@@ -44,11 +56,22 @@ then
 		echo "deb file:///data/debs/ubuntu $DISTRO-updates main restricted universe multiverse" >> /etc/apt/sources.list
 		echo "deb file:///data/debs/ubuntu $DISTRO-security main restricted universe multiverse" >> /etc/apt/sources.list
 	fi
-	apt-get -qq update
+	apt-get -qq update &>/dev/null
+	apt-get -qq -y dist-upgrade
+	apt-get -qq -y --purge autoremove &>/dev/null
+	clear
+	echo "---------------------------------------------------------"
+	echo "Looks like you want to set up a new server, let's do it.."
+	echo "----------------------------------------------------"
+	echo "Synchronising updates (this will take a long time).."
+	echo "---------------------------"
+	echo "Updating operating system.."
+
 
 	#Install apache
+	echo "--------------------------------------------------------"
 	echo "Installing web server and configuring Linux repository.."
-	apt-get -qq install apache2
+	apt-get -qq -y install apache2 &>/dev/null
 
 	#Set up deb archive links for clients
 	cd /var/www/
@@ -56,35 +79,98 @@ then
 	do
 		ln -sf /data/debs/$x
 	done
+	ln -sf /data/keys
 
 	#Add update drive to fstab
 	if [ -z "`grep $DEVICE /etc/fstab`" ]
 	then
-		echo "$DEVICE $MOUNTPOINT auto noauto,noatime 0 0" >> /etc/fstab
+		echo "UUID=$DEVICEUUID $MOUNTPOINT auto noauto,noatime 0 0" >> /etc/fstab
 	fi
-	update-rc.d -f apparmor remove && /etc/init.d/apparmor stop
+
+	#Installing packages
+	update-rc.d -f apparmor remove &>/dev/null
+	/etc/init.d/apparmor stop &>/dev/null
+	echo "---------------------"
 	echo "Installing services.."
-	apt-get -qq install bind9 vim postfix htop logwatch dovecot-imap dovecot-common postgresql-8.3 nfs-kernel-server bash-completion
+	apt-get -qq -y install bash-completion bind9 dovecot-imapd dovecot-common gpm htop logwatch mutt nfs-kernel-server openssh-server postfix postgresql-8.3 vim &>/dev/null
+
+	#Configure system
+	echo "-------------------------------------------"
+	echo "Installation complete, configuring system.."
 
 	#Postfix changes
 	echo "`dnsdomainname`" > /etc/mailname
 	sed -i s/#myorigin/myorigin/g /etc/postfix/main.cf
 	sed -i s/mydestination\ =/mydestination\ =\ `dnsdomainname`,/g /etc/postfix/main.cf
 	sed -i s/mynetworks\ =/mynetworks\ =\ $NETWORK\\/24,/g /etc/postfix/main.cf
-	echo "Installation complete, configuring system.."
+	/etc/init.d/postfix reload &>/dev/null
 
-#	sed -i s/hello/hi/g test1
-	#set syntax and jump in vimrc (use sed?)
-	#set bash colours
+
+	#Setting up bash colouring
+	#echo "export PS1=\"\[\033[01;31m\]\h \[\033[01;34m\]\W \[\033[01;32m\]\[\033[01;34m\] \\$\[\033[00m\] \"" >> /root/.bashrc 
+	#echo "export PS1=\"\[\033[01;32m\]\u \[\033[01;36m\]@\[\033[01;32m\]\h \[\033[01;34m\]\W \[\033[01;32m\] \[\033[01;34m\] \\$\[\033[00m\] \"" >
+
+	#Gentoo's bashrc
+	#PS1='\[\033[01;31m\]\h\[\033[01;34m\] \W \$\[\033[00m\] '
+	#PS1='\[\033[01;32m\]\u@\h\[\033[01;34m\] \w \$\[\033[00m\] '
+
+#	echo "#Setting decent colour prompt" >> /home/dpadmin/.bashrc
+#	echo "if [ \${EUID} -eq 0 ] ; then export PS1=\"\[\033[01;31m\]\h \[\033[01;34m\]\W \[\033[01;32m\]\[\033[01;34m\]\$\[\033[00m\] \" ; else export PS1=\"\[\033[01;32m\]\u\[\033[01;36m\]@\[\033[01;32m\]\h \[\033[01;34m\]\W \[\033[01;32m\]\[\033[01;34m\]\$\[\033[00m\] \" ; fi" >> /home/dpadmin/.bashrc
+#	echo "#Setting decent colour prompt" >> /root/.bashrc
+#	echo "if [ \${EUID} -eq 0 ] ; then export PS1=\"\[\033[01;31m\]\h \[\033[01;34m\]\W \[\033[01;32m\]\[\033[01;34m\]\$\[\033[00m\] \" ; else export PS1=\"\[\033[01;32m\]\u\[\033[01;36m\]@\[\033[01;32m\]\h \[\033[01;34m\]\W \[\033[01;32m\]\[\033[01;34m\]\$\[\033[00m\] \" ; fi" >> /root/.bashrc
+
+	echo "#Setting decent colour prompt" >> /home/dpadmin/.bashrc
+	echo "if [ \${EUID} -eq 0 ] ; then export PS1='\[\033[01;31m\]\h\[\033[01;34m\] \W \\$\[\033[00m\] ' ; else export PS1='\[\033[01;32m\]\u@\h\[\033[01;34m\] \w \\$\[\033[00m\] ' ; fi" >> /home/dpadmin/.bashrc
+	echo "#Setting decent colour prompt" >> /root/.bashrc
+	echo "if [ \${EUID} -eq 0 ] ; then export PS1='\[\033[01;31m\]\h\[\033[01;34m\] \W \\$\[\033[00m\] ' ; else export PS1='\[\033[01;32m\]\u@\h\[\033[01;34m\] \w \\$\[\033[00m\] ' ; fi" >> /root/.bashrc
+
+
+	#Set up highlighting and jump in vim
+	sed -i s/\"syntax\ on/syntax\ on/g /etc/vim/vimrc
+	sed -i s/\"\ Uncomment\ the\ following\ to\ have\ Vim\ jump/\"\ THIS\ IS\ SET\ AT\ END\ -\ Uncomment\ the\ following\ to\ have\ Vim\ jump/g /etc/vim/vimrc
+	echo "" >> /etc/vim/vimrc
+	echo "\" Setting jump to last position" >> /etc/vim/vimrc
+	echo "if has(\"autocmd\")" >> /etc/vim/vimrc
+	echo "  au BufReadPost * if line(\"'\\\"\") > 0 && line(\"'\\\"\") <= line(\"$\")" >> /etc/vim/vimrc
+	echo "    \| exe \"normal g'\\\"\" | endif" >> /etc/vim/vimrc
+	echo "endif" >> /etc/vim/vimrc
+
 	#set up ssh keys
+
 	#create dpuser and add groups
+	useradd -g users -u 1001 -m -s /bin/bash -p "\$1\$txXrxyT2\$2/z9.b/xazwqnsJskz7o./" dpuser
+
 	#configure nfs
+
 	#set up /etc/hosts localhost to point to fqdn 
+	sed -i /^127.0.0.1/c\127.0.0.1\\t`hostname -f`\\t`hostname`\\tlocalhost.localdomain\\tlocalhost /etc/hosts
+
 	#configure dns
+
 	#configure sudo to run update-system without password
 
 
+	echo "-------------------------------------"
+	echo "Setting up first time server complete"
 	echo "Setting up first time server - SUCCESS" >> $COMPLETEFILE
+	echo ""
+	read
+	echo "hit enter to continue"
+else
+	#We want to run the sync anyway
+	echo "-----------------------"
+	echo "Synchronising updates.."
+	rsync -a $MOUNTPOINT/data /
+
+	if [ $? == 0 ]
+	then
+		echo "Synchronisation - SUCCESS" >> $COMPLETEFILE
+	else
+		echo "----------------------------------------"
+		echo "Synchronisation didn't succeed, exiting."
+		echo ""
+		exit 1
+	fi
 fi
 
 #Update antivirus definitions
@@ -93,7 +179,15 @@ if [ -n "`dpkg -l |grep apache2`" -a -d "/var/www" ]
 		echo "------------------------------------"
 		echo "Updating online virus definitions.."
 		rsync -a /data/clamav/db/*cvd /var/www/
-		echo "Copy ClamAV definitions to Apache - SUCCESS" >> $COMPLETEFILE
+	if [ $? == 0 ]
+		then
+			echo "Copy ClamAV definitions to Apache - SUCCESS" >> $COMPLETEFILE
+		else
+			echo "-------------------------------------------------------"
+			echo "Couldn't copy ClamAV definitions successfully, exiting."
+			echo ""
+			exit 1
+		fi
 	else
 		echo "------------------------------------"
 		echo "Skipping antivirus update."
@@ -104,10 +198,18 @@ fi
 echo "-----------------------------------------"
 echo "Updating package local package database.."
 apt-get -qq update
-echo "Update apt database - SUCCESS" >> $COMPLETEFILE
+if [ $? == 0 ]
+then
+	echo "Update apt database - SUCCESS" >> $COMPLETEFILE
+else
+	echo "------------------------------------------------"
+	echo "Couldn't update local package database, exiting."
+	echo ""
+	exit 1
+fi
 
 #Print datestamp of virus defs
-echo "-----------------------------------------"
+echo "-----------------------------"
 echo "Checking ClamAV definitions.."
 #Testing if the date on the ClamAV definitions are less than three days old. If so, good. If not, print check.
 if [ `stat -c %Y /data/clamav/db/daily.cvd` -lt `date +%s --date "2 days ago"` ]
@@ -150,3 +252,10 @@ echo ""
 
 #Clean up - keeping these as logs now
 #rm $COMPLETEFILE
+
+if [ "$STATUS" = "new" ]
+then
+	echo ""
+	echo "Server configuration complete. Please reboot."
+	echo ""
+fi

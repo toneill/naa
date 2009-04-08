@@ -14,7 +14,8 @@
 # or -o
 # and -a
 
-if [ "$UID" != "0" ]
+
+if [ $EUID != 0 ]
 then
 	echo ""
 	echo "You must run this as root, prepend sudo."
@@ -33,8 +34,8 @@ export DISTRO=intrepid
 export DEBIAN_PRIORITY=critical
 
 #Set file for errors and completion status
-export ERRORFILE="/var/log/mount-update-drive-error-`date +%Y%m%d%H%M`"
-export COMPLETEFILE="/var/log/system-update-completed-`date +%Y%m%d%H%M`"
+export ERRORFILE="/var/log/update-system/mount-update-drive-error-`date +%Y%m%d%H%M`"
+export COMPLETEFILE="/var/log/update-system/system-update-completed-`date +%Y%m%d%H%M`"
 
 #Specify the mount point
 export MOUNTPOINT=/mnt/update-drive
@@ -47,6 +48,46 @@ export DEVICE="`ls -l /dev/disk/by-uuid/$DEVICEUUID |awk {'print $10'} |sed s/".
 echo  ""
 
 export NETWORK=`ifconfig eth0 |grep "inet addr" |grep -v 127.0.0.1 |awk -F ":" {'print $3'} |awk {'print $1'} |sed s/255/0/g`
+
+#Need to check if this is being run from the mounted unit, which we can't do cause we want to unmount it in the end.
+TEMPMOUNT="`cat /proc/mounts |grep $DEVICE |awk {'print $2'}`"
+if [ -n "$TEMPMOUNT" ]
+then
+	mkdir /tmp/mount-external-drive &>/dev/null
+	mount $DEVICE /tmp/mount-external-drive &>/dev/null
+	cp -a /tmp/mount-external-drive/scripts/* /usr/local/bin/ &>/dev/null
+	chmod a+x /usr/local/bin/* &>/dev/null
+	sync
+	for x in `grep $DEVICE /proc/mounts |awk {'print $2'}`
+	do
+		umount $x 2>$ERRORFILE
+	done
+	rmdir /tmp/mount-external-drive &>/dev/null
+	if [ -n "`grep $DEVICE /proc/mounts`" ]
+	then
+		echo "The drive is still mounted. Please unmount and run:"
+		echo "sudo update-system"
+		echo ""
+		exit 1
+	else
+		echo "The drive was still mounted. Please run:"
+		echo "sudo update-system"
+		exit 1
+	fi
+fi
+
+#Create log location
+if [ ! -e /var/log/update-system ]
+then
+	mkdir -p /var/log/update-system
+else
+	if [ ! -d /var/log/update-system ]
+	then
+		echo "Log location exists, but is not a directory, exiting."
+		echo ""
+		exit 1
+	fi
+fi
 
 if [ -n "$1" ]
 then
