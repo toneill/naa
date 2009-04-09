@@ -92,12 +92,23 @@ then
 	/etc/init.d/apparmor stop &>/dev/null
 	echo "---------------------"
 	echo "Installing services.."
-	apt-get -qq -y install bash-completion bind9 dovecot-imapd dovecot-common gpm htop logwatch mutt nfs-kernel-server openssh-server postfix postgresql-8.3 vim &>/dev/null
+	apt-get -qq -y install bash-completion bind9 dovecot-imapd dovecot-common gpm htop logwatch mutt nfs-kernel-server openssh-server postfix postgresql-8.3 vim
 
-	#Configure system
+	clear
+	echo "---------------------------------------------------------"
+	echo "Looks like you want to set up a new server, let's do it.."
+	echo "----------------------------------------------------"
+	echo "Synchronising updates (this will take a long time).."
+	echo "---------------------------"
+	echo "Updating operating system.."
+	echo "--------------------------------------------------------"
+	echo "Installing web server and configuring Linux repository.."
+	echo "---------------------"
+	echo "Installing services.."
 	echo "-------------------------------------------"
 	echo "Installation complete, configuring system.."
 
+	#Configure system
 	#Postfix changes
 	echo "`dnsdomainname`" > /etc/mailname
 	sed -i s/#myorigin/myorigin/g /etc/postfix/main.cf
@@ -128,19 +139,30 @@ then
 	#Set up highlighting and jump in vim
 	sed -i s/\"syntax\ on/syntax\ on/g /etc/vim/vimrc
 	sed -i s/\"\ Uncomment\ the\ following\ to\ have\ Vim\ jump/\"\ THIS\ IS\ SET\ AT\ END\ -\ Uncomment\ the\ following\ to\ have\ Vim\ jump/g /etc/vim/vimrc
-	echo "" >> /etc/vim/vimrc
-	echo "\" Setting jump to last position" >> /etc/vim/vimrc
-	echo "if has(\"autocmd\")" >> /etc/vim/vimrc
-	echo "  au BufReadPost * if line(\"'\\\"\") > 0 && line(\"'\\\"\") <= line(\"$\")" >> /etc/vim/vimrc
-	echo "    \| exe \"normal g'\\\"\" | endif" >> /etc/vim/vimrc
-	echo "endif" >> /etc/vim/vimrc
-
+	cat << EOF >> /etc/vim/vimrc
+	
+	" Setting jump to last position
+	if has("autocmd")
+	  au BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$")
+	    \| exe "normal! g'\"" | endif
+	endif
+EOF
 	#set up ssh keys
 
-	#create dpuser and add groups
-	useradd -g users -u 1001 -m -s /bin/bash -p "\$1\$txXrxyT2\$2/z9.b/xazwqnsJskz7o./" dpuser
+	#Set system to use vim for editor
+	update-alternatives --set editor /usr/bin/vim.basic &>/dev/null
 
+	#create dpuser and add groups
+	useradd -g users -u 1001 -m -s /bin/bash -p "\$1\$txXrxyT2\$2/z9.b/xazwqnsJskz7o./" dpuser &>/dev/null
+	groupadd dpuser &>/dev/null
+	for x in dpuser
+	do
+		gpasswd -a dpuser $x
+	done
+	
 	#configure nfs
+	echo "/data/dpr `echo $NETWORK |sed s/.0$/.*/g`(rw,sync,no_subtree_check)" >> /etc/exports
+	/etc/init.d/nfs-kernel-server reload &>/dev/null
 
 	#set up /etc/hosts localhost to point to fqdn 
 	sed -i /^127.0.0.1/c\127.0.0.1\\t`hostname -f`\\t`hostname`\\tlocalhost.localdomain\\tlocalhost /etc/hosts
@@ -149,13 +171,7 @@ then
 
 	#configure sudo to run update-system without password
 
-
-	echo "-------------------------------------"
-	echo "Setting up first time server complete"
 	echo "Setting up first time server - SUCCESS" >> $COMPLETEFILE
-	echo ""
-	read
-	echo "hit enter to continue"
 else
 	#We want to run the sync anyway
 	echo "-----------------------"
@@ -176,7 +192,7 @@ fi
 #Update antivirus definitions
 if [ -n "`dpkg -l |grep apache2`" -a -d "/var/www" ]
 	then
-		echo "------------------------------------"
+		echo "-----------------------------------"
 		echo "Updating online virus definitions.."
 		rsync -a /data/clamav/db/*cvd /var/www/
 	if [ $? == 0 ]
@@ -255,7 +271,6 @@ echo ""
 
 if [ "$STATUS" = "new" ]
 then
-	echo ""
 	echo "Server configuration complete. Please reboot."
 	echo ""
 fi

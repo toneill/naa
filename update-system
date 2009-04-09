@@ -28,7 +28,7 @@ fi
 #Setting variables - we are exporting them so that they will also exist in the 'synchronise' script, which is called by this one.
 
 #Version of Debian/Ubuntu for servers
-export DISTRO=intrepid
+export DISTRO=hardy
 
 #Set higher priority for installing packages in Debian so we aren't prompted
 export DEBIAN_PRIORITY=critical

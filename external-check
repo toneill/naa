@@ -1,0 +1,81 @@
+#!/bin/bash
+
+#Check that we're root
+if [ $EUID != 0 ]
+then
+	echo ""
+	echo "You must run this as root, prepend sudo."
+	echo "Exiting."
+	echo ""
+	exit 1
+fi
+
+#Specify the UUID of the external unit (get with `sudo vol_id -u /dev/sdXX`).
+export DEVICEUUID="9c15b64f-d797-4ea2-a47b-86d69bd71d62"
+
+#Grab the device by UUID and convert to SCSI syntax.
+export DEVICE="`ls -l /dev/disk/by-uuid/$DEVICEUUID |awk {'print $10'} |sed s/"..\/..\/"/"\/dev\/"/ 2>/dev/null`"
+echo  ""
+
+#Specify the mount point
+export MOUNTPOINT=/media/update-drive
+
+#Make sure the device is plugged in!
+if [ ! -n "$DEVICE" ]
+	then
+		echo "Can't find device, trying again in 10 seconds..."
+		echo ""
+		sleep 10
+fi
+
+if [ -n "$DEVICE" ]
+	then
+		echo "Device exists, that's a good start."
+		echo ""
+	else
+		echo ""
+		echo "Ahh.. have you plugged in the device and turned it on??" 
+		echo "Exiting."
+		echo ""
+		exit 1
+fi
+
+#Check if the mount point exists, if not, create it.
+echo "Attempting to mount external unit.."
+sleep 1
+if [ ! -e "$MOUNTPOINT" ]
+then
+	mkdir -p $MOUNTPOINT
+elif [ ! -d "$MOUNTPOINT" ]
+	then
+		echo "$MOUNTPOINT exists, but it is not a directory, please fix."
+		echo "Exiting."
+		echo ""
+		exit 1
+fi
+
+#Mount device.
+mount $DEVICE $MOUNTPOINT 2>$ERRORFILE
+
+#Check mount was successful, or exit
+if [ -n "`cat /proc/mounts |grep $DEVICE |grep $MOUNTPOINT`" ] 
+	then
+		echo "Mounted successfully."
+		echo ""
+		sleep 1
+	else
+		echo "Could not mount unit, please fix."
+		echo ""
+		echo "Error:"
+		echo "`cat $ERRORFILE`."
+		echo ""
+		echo "Exiting."
+mount $DEVICEUUID $MOUNTPOINT
+
+for x in external-check update-system synchronise
+do
+	cp $MOUNTPOINT/scripts/$x /usr/local/bin/
+	chmod a+x /usr/local/bin/$x
+done
+
+/usr/local/bin/synchronise
