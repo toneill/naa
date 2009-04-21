@@ -22,6 +22,30 @@ then
 fi
 
 #Variables should exist in the shell as they were exported by the 'update-system' script
+#Version of Debian/Ubuntu for servers
+export DISTRO=hardy
+
+#Set higher priority for installing packages in Debian so we aren't prompted
+export DEBIAN_PRIORITY=critical
+
+#Set file for errors and completion status
+export ERRORFILE="/var/log/update-system/mount-update-drive-error-`date +%Y%m%d%H%M`"
+export COMPLETEFILE="/var/log/update-system/system-update-completed-`date +%Y%m%d%H%M`"
+
+export NETWORK=`ifconfig eth0 |grep "inet addr" |grep -v 127.0.0.1 |awk -F ":" {'print $3'} |awk {'print $1'} |sed s/255/0/g`
+
+#Create log location
+if [ ! -e /var/log/update-system ]
+then
+	mkdir -p /var/log/update-system
+else
+	if [ ! -d /var/log/update-system ]
+	then
+		echo "Log location exists, but is not a directory, exiting."
+		echo ""
+		exit 1
+	fi
+fi
 
 clear
 
@@ -31,7 +55,6 @@ then
 	clear
 	echo "---------------------------------------------------------"
 	echo "Looks like you want to set up a new server, let's do it.."
-	sleep 2
 
 	echo "----------------------------------------------------"
 	echo "Synchronising updates (this will take a long time).."

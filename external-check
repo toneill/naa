@@ -1,5 +1,21 @@
 #!/bin/bash
 
+#Copyright 2008-2009 Christopher Smart, under GPLv3 (a copy included in COPYING)
+
+#NOTES:
+#The purpose of this script is to:
+#Mount the external update drive
+#Copy the synchronise script (which might have changes)
+#Execute the synchronise script from the local machine
+
+#This script should only ever set variables, mount the drive, copy the script and execute it.
+#Everything else should be done in the synchronise script, so theoreticallty file should never change (except when using a new update drive).
+
+#If the physical drive changes, all you need to do is update DEVICEUUID variable.
+#Specify the UUID of the external unit (get with `sudo vol_id -u /dev/sdXX`) and mountpoint.
+export DEVICEUUID="9c15b64f-d797-4ea2-a47b-86d69bd71d62"
+export MOUNTPOINT=/media/update-drive
+
 #Check that we're root
 if [ $EUID != 0 ]
 then
@@ -10,15 +26,50 @@ then
 	exit 1
 fi
 
-#Specify the UUID of the external unit (get with `sudo vol_id -u /dev/sdXX`).
-export DEVICEUUID="9c15b64f-d797-4ea2-a47b-86d69bd71d62"
+#We're going to grab the device by UUID and convert to SCSI syntax.
+export DEVICE="`ls -l /dev/disk/by-uuid/$DEVICEUUID 2>/dev/null |awk {'print $10'} |sed s/"..\/..\/"/"\/dev\/"/`"
 
-#Grab the device by UUID and convert to SCSI syntax.
-export DEVICE="`ls -l /dev/disk/by-uuid/$DEVICEUUID |awk {'print $10'} |sed s/"..\/..\/"/"\/dev\/"/ 2>/dev/null`"
-echo  ""
+#Check to see if this command is being run from the drive. If it is, exit. If not, continue.
+if [ -n "`ps x |grep $MOUNTPOINT`" -o -n "`pwd |grep $MOUNTPOINT`" ]
+then
+	mkdir /tmp/mount-external-drive &>/dev/null
+	mount $DEVICE /tmp/mount-external-drive &>/dev/null
+	cp -a /tmp/mount-external-drive/scripts/* /usr/local/bin/ &>/dev/null
+	chmod a+x /usr/local/bin/* &>/dev/null
+	sync
+	for x in `grep $DEVICE /proc/mounts |awk {'print $2'}`
+	do
+		umount $x 2>$ERRORFILE
+	done
+	rmdir /tmp/mount-external-drive &>/dev/null
+	if [ -n "`grep $DEVICE /proc/mounts`" ]
+	then
+		echo ""
+		echo "You appear to be running the script from the external drive itself."
+		echo "============================="
+		echo "** PLEASE UN-MOUNT THE UNIT **"
+		echo "============================="
+		echo "And then run:"
+		echo "sudo update-system"
+		echo ""
+		exit 1
+	else
+		echo ""
+		echo "Whoops, you appear to be running the script from the external drive itself."
+		echo "Please run:"
+	        echo "sudo update-system"
+		echo ""
+		exit 1
+	fi
+fi
 
-#Specify the mount point
-export MOUNTPOINT=/media/update-drive
+if [ -n "$1" ]
+then
+	if [ `echo $1` = "new" ]
+	then
+		export STATUS="new"
+	fi
+fi
 
 #Make sure the device is plugged in!
 if [ ! -n "$DEVICE" ]
@@ -29,20 +80,19 @@ if [ ! -n "$DEVICE" ]
 fi
 
 if [ -n "$DEVICE" ]
-	then
-		echo "Device exists, that's a good start."
-		echo ""
-	else
-		echo ""
-		echo "Ahh.. have you plugged in the device and turned it on??" 
-		echo "Exiting."
-		echo ""
-		exit 1
+then
+	echo "Device exists, that's a good start."
+	echo ""
+else
+	echo ""
+	echo "Ahh.. have you plugged in the device and turned it on??" 
+	echo "Exiting."
+	echo ""
+	exit 1
 fi
 
 #Check if the mount point exists, if not, create it.
 echo "Attempting to mount external unit.."
-sleep 1
 if [ ! -e "$MOUNTPOINT" ]
 then
 	mkdir -p $MOUNTPOINT
@@ -57,12 +107,11 @@ fi
 #Mount device.
 mount $DEVICE $MOUNTPOINT 2>$ERRORFILE
 
-#Check mount was successful, or exit
+#Check mount was successful, or exit.
 if [ -n "`cat /proc/mounts |grep $DEVICE |grep $MOUNTPOINT`" ] 
 	then
 		echo "Mounted successfully."
 		echo ""
-		sleep 1
 	else
 		echo "Could not mount unit, please fix."
 		echo ""
@@ -70,7 +119,8 @@ if [ -n "`cat /proc/mounts |grep $DEVICE |grep $MOUNTPOINT`" ]
 		echo "`cat $ERRORFILE`."
 		echo ""
 		echo "Exiting."
-mount $DEVICEUUID $MOUNTPOINT
+		exit 1
+fi
 
 for x in external-check update-system synchronise
 do
@@ -78,4 +128,36 @@ do
 	chmod a+x /usr/local/bin/$x
 done
 
+#Execute the synchronisation script to do the updating.
 /usr/local/bin/synchronise
+
+#Now that the update is finished, unmount external drive.
+while [ -n "`grep $DEVICE /proc/mounts`" ]
+do
+	for x in `grep $DEVICE /proc/mounts |awk {'print $2'}`
+	do
+		umount $x 2>$ERRORFILE
+	done
+done
+
+if [ -n "`grep $DEVICE /proc/mounts`" ]
+then
+	echo "=================================================================="
+	echo "** Could not unmount the external unit, please unmount manually **"
+	echo "=================================================================="
+	echo ""
+	echo "Error:"
+	echo "echo `cat $ERRORFILE`"
+	echo ""
+else
+	echo "=================================="
+	echo "** External unit safe to remove **"
+	echo "=================================="
+	echo ""
+fi
+
+#Unset variables.
+for x in COMPLETEFILE DEBIAN_PRIORITY DEVICE DEVICEUUID DISTRO ERRORFILE MOUNTPOINT NETWORK STATUS
+do
+	unset $x
+done
