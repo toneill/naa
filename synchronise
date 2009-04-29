@@ -22,17 +22,38 @@ then
 fi
 
 #Variables should exist in the shell as they were exported by the 'update-system' script
-#Version of Debian/Ubuntu for servers
-export DISTRO=hardy
+#Version of Debian/Ubuntu for servers - this is used to set /etc/apt/sources.list
+DISTRO=`cat /etc/lsb-release 2>/dev/null |grep DISTRIB_CODENAME |awk -F "=" {'print $2'}`
+
+#To overwrite the automatically generated DISTRO above, unmask and set the following
+#DISTRO=hardy
 
 #Set higher priority for installing packages in Debian so we aren't prompted
-export DEBIAN_PRIORITY=critical
+DEBIAN_PRIORITY=critical
 
 #Set file for errors and completion status
-export ERRORFILE="/var/log/update-system/mount-update-drive-error-`date +%Y%m%d%H%M`"
-export COMPLETEFILE="/var/log/update-system/system-update-completed-`date +%Y%m%d%H%M`"
+ERRORFILE="/var/log/update-system/mount-update-drive-error-`date +%Y%m%d%H%M`"
+COMPLETEFILE="/var/log/update-system/system-update-completed-`date +%Y%m%d%H%M`"
 
-export NETWORK=`ifconfig eth0 |grep "inet addr" |grep -v 127.0.0.1 |awk -F ":" {'print $3'} |awk {'print $1'} |sed s/255/0/g`
+#Getting the network broadcast
+NETWORK=`ifconfig eth0 |grep "inet addr" |grep -v 127.0.0.1 |awk -F ":" {'print $3'} |awk {'print $1'} |sed s/255/0/g`
+
+#Check that this is being run on a system we support (currently either Debian or Ubuntu)
+if [ -e /etc/lsb-release ]
+then
+	SYSTEM=`cat /etc/lsb-release  |grep DISTRIB_ID |awk -F "=" {'print $2'}`
+	if [ $SYSTEM != Debian -a $SYSTEM != Ubuntu ]
+	then
+		echo "You don't seem to be running Debian or Ubuntu. This script won't work."
+		echo "Exiting."
+		echo ""
+		exit 1
+	fi
+else
+	echo "Hmm... I can't tell what Linux you're running, exiting."
+	echo ""
+	exit 1
+fi
 
 #Create log location
 if [ ! -e /var/log/update-system ]
@@ -141,18 +162,6 @@ then
 
 
 	#Setting up bash colouring
-	#echo "export PS1=\"\[\033[01;31m\]\h \[\033[01;34m\]\W \[\033[01;32m\]\[\033[01;34m\] \\$\[\033[00m\] \"" >> /root/.bashrc 
-	#echo "export PS1=\"\[\033[01;32m\]\u \[\033[01;36m\]@\[\033[01;32m\]\h \[\033[01;34m\]\W \[\033[01;32m\] \[\033[01;34m\] \\$\[\033[00m\] \"" >
-
-	#Gentoo's bashrc
-	#PS1='\[\033[01;31m\]\h\[\033[01;34m\] \W \$\[\033[00m\] '
-	#PS1='\[\033[01;32m\]\u@\h\[\033[01;34m\] \w \$\[\033[00m\] '
-
-#	echo "#Setting decent colour prompt" >> /home/dpadmin/.bashrc
-#	echo "if [ \${EUID} -eq 0 ] ; then export PS1=\"\[\033[01;31m\]\h \[\033[01;34m\]\W \[\033[01;32m\]\[\033[01;34m\]\$\[\033[00m\] \" ; else export PS1=\"\[\033[01;32m\]\u\[\033[01;36m\]@\[\033[01;32m\]\h \[\033[01;34m\]\W \[\033[01;32m\]\[\033[01;34m\]\$\[\033[00m\] \" ; fi" >> /home/dpadmin/.bashrc
-#	echo "#Setting decent colour prompt" >> /root/.bashrc
-#	echo "if [ \${EUID} -eq 0 ] ; then export PS1=\"\[\033[01;31m\]\h \[\033[01;34m\]\W \[\033[01;32m\]\[\033[01;34m\]\$\[\033[00m\] \" ; else export PS1=\"\[\033[01;32m\]\u\[\033[01;36m\]@\[\033[01;32m\]\h \[\033[01;34m\]\W \[\033[01;32m\]\[\033[01;34m\]\$\[\033[00m\] \" ; fi" >> /root/.bashrc
-
 	echo "#Setting decent colour prompt" >> /home/dpadmin/.bashrc
 	echo "if [ \${EUID} -eq 0 ] ; then export PS1='\[\033[01;31m\]\h\[\033[01;34m\] \W \\$\[\033[00m\] ' ; else export PS1='\[\033[01;32m\]\u@\h\[\033[01;34m\] \w \\$\[\033[00m\] ' ; fi" >> /home/dpadmin/.bashrc
 	echo "#Setting decent colour prompt" >> /root/.bashrc
@@ -254,8 +263,8 @@ echo "Checking ClamAV definitions.."
 if [ `stat -c %Y /data/clamav/db/daily.cvd` -lt `date +%s --date "2 days ago"` ]
 	then
 		echo "Today is `date +%Y-%m-%d`."
-		echo "Latest daily.cvd is dated `stat -c %Y /data/clamav/db/daily.cvd |awk {'print $1'}`."
-		echo "Latest main.cvd is dated `stat -c %Y /data/clamav/db/main.cvd |awk {'print $1'}`."
+		echo "Latest daily.cvd is dated `stat -c %y /data/clamav/db/daily.cvd |awk {'print $1'}`."
+		echo "Latest main.cvd is dated `stat -c %y /data/clamav/db/main.cvd |awk {'print $1'}`."
 		echo "Please compare the dates."
 		echo ""
 		echo "** HIT ENTER TO CONTINUE **"
@@ -266,7 +275,7 @@ if [ `stat -c %Y /data/clamav/db/daily.cvd` -lt `date +%s --date "2 days ago"` ]
 fi
 
 #If this is marlin, backup the Amanda config files
-if [ `hostname -f` = "marlin.dr.lan" ]
+if [ `hostname` == "marlin" -o `hostname -f` == "marlin.dr.lan" ]
 	then
 		echo "--------------------------------"
 		echo "Backing up Amanda config files.."
