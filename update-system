@@ -32,6 +32,29 @@ then
 	exit 1
 fi
 
+#Check to see that the drive is plugged in here, else we'll get errors trying to create variables later
+#Make sure the device is plugged in!
+if [ ! -e "/dev/disk/by-uuid/$DEVICEUUID" ]
+	then
+		echo "Can't find device, trying again in 10 seconds..."
+		echo "(Press CTRL+C to cancel)"
+		echo ""
+		sleep 10
+fi
+
+if [ -e "/dev/disk/by-uuid/$DEVICEUUID" ]
+then
+	echo "Device exists, that's a good start."
+	echo ""
+	sleep 1
+else
+	echo "Ahh.. have you plugged in the device and turned it on??" 
+	echo "Exiting."
+	echo ""
+	exit 1
+fi
+
+
 #Create log location
 if [ ! -e /var/log/update-system ]
 then
@@ -93,27 +116,6 @@ then
 	then
 		export STATUS="new"
 	fi
-fi
-
-#Make sure the device is plugged in!
-if [ ! -n "$DEVICE" ]
-	then
-		echo "Can't find device, trying again in 15 seconds..."
-		echo "(Press CTRL+C to cancel)"
-		echo ""
-		sleep 15
-fi
-
-if [ -n "$DEVICE" ]
-then
-	echo "Device exists, that's a good start."
-	echo ""
-	sleep 1
-else
-	echo "Ahh.. have you plugged in the device and turned it on??" 
-	echo "Exiting."
-	echo ""
-	exit 1
 fi
 
 #Check if the mount point exists, if not, create it.
