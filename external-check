@@ -16,6 +16,10 @@
 export DEVICEUUID="9c15b64f-d797-4ea2-a47b-86d69bd71d62"
 export MOUNTPOINT=/media/update-drive
 
+#Set file for errors and completion status
+export ERRORFILE="/var/log/update-system/mount-update-drive-error-`date +%Y%m%d%H%M`"
+export COMPLETEFILE="/var/log/update-system/system-update-completed-`date +%Y%m%d%H%M`"
+
 #Check that we're root
 if [ $EUID != 0 ]
 then
@@ -26,11 +30,27 @@ then
 	exit 1
 fi
 
+#Create log location
+if [ ! -e /var/log/update-system ]
+then
+	mkdir -p /var/log/update-system
+else
+	if [ ! -d /var/log/update-system ]
+	then
+		echo "Log location exists, but is not a directory, exiting."
+		echo ""
+		exit 1
+	fi
+fi
+
 #We're going to grab the device by UUID and convert to SCSI syntax.
 export DEVICE="`ls -l /dev/disk/by-uuid/$DEVICEUUID 2>/dev/null |awk {'print $10'} |sed s/"..\/..\/"/"\/dev\/"/`"
 
+#Where the Device is mounted, so we can check if it's running from there later
+MOUNTED="`df -h |grep $DEVICE 2>/dev/null |awk {'print $6'}`"
+
 #Check to see if this command is being run from the drive. If it is, exit. If not, continue.
-if [ -n "`ps x |grep $MOUNTPOINT`" -o -n "`pwd |grep $MOUNTPOINT`" ]
+if [ -n "`ps x |grep $MOUNTPOINT 2>/dev/null`" -o -n "`pwd |grep $MOUNTPOINT 2>/dev/null`" -o -n "`df -h . |grep $DEVICE`" -o -n "`for x in $MOUNTED ; do ps ax |grep [u]pdate-system |grep $x 2>/dev/null ; done`" ]
 then
 	mkdir /tmp/mount-external-drive &>/dev/null
 	mount $DEVICE /tmp/mount-external-drive &>/dev/null
@@ -46,17 +66,19 @@ then
 	then
 		echo ""
 		echo "You appear to be running the script from the external drive itself."
-		echo "============================="
+		echo "=============================="
 		echo "** PLEASE UN-MOUNT THE UNIT **"
-		echo "============================="
-		echo "And then run:"
-		echo "sudo update-system"
+		echo "=============================="
+		echo "Simply run the following (pass in 'new' if this is a new install):"
+		echo ""
+		echo "sudo umount $MOUNTED ; sudo update-system"
 		echo ""
 		exit 1
 	else
 		echo ""
 		echo "Whoops, you appear to be running the script from the external drive itself."
-		echo "Please run:"
+		echo "Please run the following (pass in 'new' if this is a new install):"
+		echo ""
 	        echo "sudo update-system"
 		echo ""
 		exit 1
@@ -74,9 +96,10 @@ fi
 #Make sure the device is plugged in!
 if [ ! -n "$DEVICE" ]
 	then
-		echo "Can't find device, trying again in 10 seconds..."
+		echo "Can't find device, trying again in 15 seconds..."
+		echo "(Press CTRL+C to cancel)"
 		echo ""
-		sleep 10
+		sleep 15
 fi
 
 if [ -n "$DEVICE" ]
@@ -122,10 +145,10 @@ if [ -n "`cat /proc/mounts |grep $DEVICE |grep $MOUNTPOINT`" ]
 		exit 1
 fi
 
-for x in external-check update-system synchronise
+for x in update-system synchronise
 do
-	cp $MOUNTPOINT/scripts/$x /usr/local/bin/
-	chmod a+x /usr/local/bin/$x
+	cp $MOUNTPOINT/scripts/$x /usr/local/bin/ 2>/dev/null
+	chmod a+x /usr/local/bin/$x 2>/dev/null
 done
 
 #Execute the synchronisation script to do the updating.
