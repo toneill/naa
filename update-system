@@ -1,20 +1,26 @@
 #!/bin/bash
+
 #Copyright 2008-2009 Christopher Smart, under GPLv3 (a copy included in COPYING)
 
-#This is a helper script run from an external drive which copies and runs the "synchronise" script on the machine (so I can make changes in one location and have it propogated to all systems).
+#NOTES:
+#The purpose of this script is to:
+#Mount the external update drive
+#Copy the synchronise script (which might have changes)
+#Execute the synchronise script from the local machine
 
-# Some useful bash things:
-# exists: -e
-# is a file: -f
-# is a directory: -d
-# returned value is not null: -n
-# is zero: -z
-# something is equal to something else: =
-# something is NOT equal to something else: != 
-# or -o
-# and -a
+#This script should only ever set variables, mount the drive, copy the script and execute it.
+#Everything else should be done in the synchronise script, so theoreticallty file should never change (except when using a new update drive).
 
+#If the physical drive changes, all you need to do is update DEVICEUUID variable.
+#Specify the UUID of the external unit (get with `sudo vol_id -u /dev/sdXX`) and mountpoint.
+export DEVICEUUID="9c15b64f-d797-4ea2-a47b-86d69bd71d62"
+export MOUNTPOINT=/media/update-drive
 
+#Set file for errors and completion status
+export ERRORFILE="/var/log/update-system/mount-update-drive-error-`date +%Y%m%d%H%M`"
+export COMPLETEFILE="/var/log/update-system/system-update-completed-`date +%Y%m%d%H%M`"
+
+#Check that we're root
 if [ $EUID != 0 ]
 then
 	echo ""
@@ -24,34 +30,27 @@ then
 	exit 1
 fi
 
+#Create log location
+if [ ! -e /var/log/update-system ]
+then
+	mkdir -p /var/log/update-system
+else
+	if [ ! -d /var/log/update-system ]
+	then
+		echo "Log location exists, but is not a directory, exiting."
+		echo ""
+		exit 1
+	fi
+fi
 
-#Setting variables - we are exporting them so that they will also exist in the 'synchronise' script, which is called by this one.
+#We're going to grab the device by UUID and convert to SCSI syntax.
+export DEVICE="`ls -l /dev/disk/by-uuid/$DEVICEUUID 2>/dev/null |awk {'print $10'} |sed s/"..\/..\/"/"\/dev\/"/`"
 
-#Version of Debian/Ubuntu for servers
-export DISTRO=hardy
+#Where the Device is mounted, so we can check if it's running from there later
+MOUNTED="`df -h |grep $DEVICE 2>/dev/null |awk {'print $6'}`"
 
-#Set higher priority for installing packages in Debian so we aren't prompted
-export DEBIAN_PRIORITY=critical
-
-#Set file for errors and completion status
-export ERRORFILE="/var/log/update-system/mount-update-drive-error-`date +%Y%m%d%H%M`"
-export COMPLETEFILE="/var/log/update-system/system-update-completed-`date +%Y%m%d%H%M`"
-
-#Specify the mount point
-export MOUNTPOINT=/mnt/update-drive
-
-#Specify the UUID of the external unit (get with `sudo vol_id -u /dev/sdXX`).
-export DEVICEUUID="9c15b64f-d797-4ea2-a47b-86d69bd71d62"
-
-#Grab the device by UUID and convert to SCSI syntax.
-export DEVICE="`ls -l /dev/disk/by-uuid/$DEVICEUUID |awk {'print $10'} |sed s/"..\/..\/"/"\/dev\/"/ 2>/dev/null`"
-echo  ""
-
-export NETWORK=`ifconfig eth0 |grep "inet addr" |grep -v 127.0.0.1 |awk -F ":" {'print $3'} |awk {'print $1'} |sed s/255/0/g`
-
-#Need to check if this is being run from the mounted unit, which we can't do cause we want to unmount it in the end.
-TEMPMOUNT="`cat /proc/mounts |grep $DEVICE |awk {'print $2'}`"
-if [ -n "$TEMPMOUNT" ]
+#Check to see if this command is being run from the drive. If it is, exit. If not, continue.
+if [ -n "`ps x |grep $MOUNTPOINT 2>/dev/null`" -o -n "`pwd |grep $MOUNTPOINT 2>/dev/null`" -o -n "`df -h . |grep $DEVICE`" -o -n "`for x in $MOUNTED ; do ps ax |grep [u]pdate-system |grep $x 2>/dev/null ; done`" ]
 then
 	mkdir /tmp/mount-external-drive &>/dev/null
 	mount $DEVICE /tmp/mount-external-drive &>/dev/null
@@ -65,25 +64,22 @@ then
 	rmdir /tmp/mount-external-drive &>/dev/null
 	if [ -n "`grep $DEVICE /proc/mounts`" ]
 	then
-		echo "The drive is still mounted. Please unmount and run:"
-		echo "sudo update-system"
+		echo ""
+		echo "You appear to be running the script from the external drive itself."
+		echo "=============================="
+		echo "** PLEASE UN-MOUNT THE UNIT **"
+		echo "=============================="
+		echo "Simply run the following (pass in 'new' if this is a new install):"
+		echo ""
+		echo "sudo umount $MOUNTED ; sudo update-system"
 		echo ""
 		exit 1
 	else
-		echo "The drive was still mounted. Please run:"
-		echo "sudo update-system"
-		exit 1
-	fi
-fi
-
-#Create log location
-if [ ! -e /var/log/update-system ]
-then
-	mkdir -p /var/log/update-system
-else
-	if [ ! -d /var/log/update-system ]
-	then
-		echo "Log location exists, but is not a directory, exiting."
+		echo ""
+		echo "Whoops, you appear to be running the script from the external drive itself."
+		echo "Please run the following (pass in 'new' if this is a new install):"
+		echo ""
+	        echo "sudo update-system"
 		echo ""
 		exit 1
 	fi
@@ -100,26 +96,26 @@ fi
 #Make sure the device is plugged in!
 if [ ! -n "$DEVICE" ]
 	then
-		echo "Can't find device, trying again in 10 seconds..."
+		echo "Can't find device, trying again in 15 seconds..."
+		echo "(Press CTRL+C to cancel)"
 		echo ""
-		sleep 10
+		sleep 15
 fi
 
 if [ -n "$DEVICE" ]
-	then
-		echo "Device exists, that's a good start."
-		echo ""
-	else
-		echo ""
-		echo "Ahh.. have you plugged in the device and turned it on??" 
-		echo "Exiting."
-		echo ""
-		exit 1
+then
+	echo "Device exists, that's a good start."
+	echo ""
+else
+	echo ""
+	echo "Ahh.. have you plugged in the device and turned it on??" 
+	echo "Exiting."
+	echo ""
+	exit 1
 fi
 
 #Check if the mount point exists, if not, create it.
 echo "Attempting to mount external unit.."
-sleep 1
 if [ ! -e "$MOUNTPOINT" ]
 then
 	mkdir -p $MOUNTPOINT
@@ -134,12 +130,11 @@ fi
 #Mount device.
 mount $DEVICE $MOUNTPOINT 2>$ERRORFILE
 
-#Check mount was successful, or exit
+#Check mount was successful, or exit.
 if [ -n "`cat /proc/mounts |grep $DEVICE |grep $MOUNTPOINT`" ] 
 	then
 		echo "Mounted successfully."
 		echo ""
-		sleep 1
 	else
 		echo "Could not mount unit, please fix."
 		echo ""
@@ -147,20 +142,19 @@ if [ -n "`cat /proc/mounts |grep $DEVICE |grep $MOUNTPOINT`" ]
 		echo "`cat $ERRORFILE`."
 		echo ""
 		echo "Exiting."
-		echo ""
-		exit
+		exit 1
 fi
 
-cp $MOUNTPOINT/scripts/update-system /usr/local/bin/update-system
-cp $MOUNTPOINT/scripts/synchronise /usr/local/bin/synchronise
-chmod +x /usr/local/bin/update-system
-chmod +x /usr/local/bin/synchronise
+for x in update-system synchronise
+do
+	cp $MOUNTPOINT/scripts/$x /usr/local/bin/ 2>/dev/null
+	chmod a+x /usr/local/bin/$x 2>/dev/null
+done
 
-#Run the synchronise script to do the actual copying
+#Execute the synchronisation script to do the updating.
 /usr/local/bin/synchronise
 
-#Unmount external drive
-
+#Now that the update is finished, unmount external drive.
 while [ -n "`grep $DEVICE /proc/mounts`" ]
 do
 	for x in `grep $DEVICE /proc/mounts |awk {'print $2'}`
@@ -185,8 +179,9 @@ else
 	echo ""
 fi
 
-#Unset variables
-for x in COMPLETEFILE DEBIAN_PRIORITY DEVICE DEVICEUUID DISTRO ERRORFILE MOUNTPOINT NETWORK
-do unset $x
+#Unset variables.
+#for x in COMPLETEFILE DEBIAN_PRIORITY DEVICE DEVICEUUID DISTRO ERRORFILE MOUNTPOINT NETWORK STATUS
+for x in DEVICE DEVICEUUID MOUNTPOINT STATUS
+do
+	unset $x
 done
-
