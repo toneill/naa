@@ -24,7 +24,7 @@ fi
 CVS_USERNAME="matthewoliver"
 XENA_MODULES="archive audio basic csv dataset email example_plugin html image multipage naa office pdf plaintext plugin_howto postscript project psd website xena xml"
 DPR_MODULES="RollingChecker manifest sophos-bridge"
-DPR_REDESIGN_MODULES="dpr fake-bridge"
+DPR_REDESIGN_MODULES="dpr" # fake-bridge"
 
 function runCmd() {
 	cmd="$1"
@@ -89,9 +89,9 @@ function updateDPR() {
 	else
 		# Check out DPR
 		echo "Checking out DPR from *urgh* CVS *urgh*.."
-		runCmd "cvs -z3 -d:extssh:$CVS_USERNAME@dpr.cvs.sourceforge.net:/cvsroot/dpr co -P $DPR_MODULES"
+		runCmd "cvs -z3 -d:extssh:$CVS_USERNAME@dpr.cvs.sourceforge.net:/cvsroot/dpr co -P $DPR_MODULES $DPR_REDESIGN_MODULES"
 		#Because DPR is being re-designed, grab the new branch for dpr and fakebridge
-		runCmd "cvs -z3 -d:extssh:$CVS_USERNAME@dpr.cvs.sourceforge.net:/cvsroot/dpr co -r dpr_redesign -P $DPR_REDESIGN_MODULES"
+		#runCmd "cvs -z3 -d:extssh:$CVS_USERNAME@dpr.cvs.sourceforge.net:/cvsroot/dpr co -r dpr_redesign -P $DPR_REDESIGN_MODULES"
 	fi
 }
 updateDPR
@@ -127,11 +127,11 @@ checkFailed "Xena failed to build." $?
 cd ..
 
 #Building fake-bridge
-echo "Building Fake-bridge.."
-cd fake-bridge
-runCmd "ant"
-checkFailed "Fake-bridge failed to build." $?
-cd ..
+#echo "Building Fake-bridge.."
+#cd fake-bridge
+#runCmd "ant"
+#checkFailed "Fake-bridge failed to build." $?
+#cd ..
 
 # Move xena plugins to DPR
 echo "Moving Xena plugins to DPR.."
