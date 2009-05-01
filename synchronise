@@ -154,19 +154,23 @@ then
 		echo "-----------------------------------------"
 		echo "User 'dpadmin' already exists, skipping.."
 		echo "Create user 'dpadmin' - EXISTS" >> $COMPLETEFILE
+		echo "#Setting decent colour prompt" >> /home/dpadmin/.bashrc
+		echo "if [ \${EUID} -eq 0 ] ; then export PS1='\[\033[01;31m\]\h\[\033[01;34m\] \W \\$\[\033[00m\] ' ; else export PS1='\[\033[01;32m\]\u@\h\[\033[01;34m\] \w \\$\[\033[00m\] ' ; fi" >> /home/dpadmin/.bashrc
 	else
-		if [ -z "`cat /etc/passwd |grep 1000`" ]
+		if [ -n "`cat /etc/passwd |grep 1000`" ]
 		then
 			echo "--------------------------------------------------------------"
 			echo "Someone already has UID of 1000, cannot create user 'dpadmin'."
 			echo "Create user 'dpadmin' - FAIL" >> $COMPLETEFILE
 		else
 			useradd -g users -u 1000 -m -s /bin/bash -p "\$1\$txXrxyT2\$2/z9.b/xazwqnsJskz7o./" dpuser &>/dev/null
-			groupadd dpadmin
+			groupadd dpadmin &>/dev/null
 			for x in dpadmin wheel
 			do
 				gpasswd -a dpadmin $x &>/dev/null
 			done
+			echo "#Setting decent colour prompt" >> /home/dpadmin/.bashrc
+			echo "if [ \${EUID} -eq 0 ] ; then export PS1='\[\033[01;31m\]\h\[\033[01;34m\] \W \\$\[\033[00m\] ' ; else export PS1='\[\033[01;32m\]\u@\h\[\033[01;34m\] \w \\$\[\033[00m\] ' ; fi" >> /home/dpadmin/.bashrc
 			echo "Create user 'dpadmin' - SUCCESS" >> $COMPLETEFILE
 		fi
 	fi
@@ -189,24 +193,22 @@ then
 			do
 				gpasswd -a dpuser $x &>/dev/null
 			done
+			echo "#Setting decent colour prompt" >> /home/dpuser/.bashrc
+			echo "if [ \${EUID} -eq 0 ] ; then export PS1='\[\033[01;31m\]\h\[\033[01;34m\] \W \\$\[\033[00m\] ' ; else export PS1='\[\033[01;32m\]\u@\h\[\033[01;34m\] \w \\$\[\033[00m\] ' ; fi" >> /home/dpuser/.bashrc
 			echo "Create user 'dpuser' - SUCCESS" >> $COMPLETEFILE
 		fi
 	fi
 	
+	#Setting up bash colouring for root
+	echo "#Setting decent colour prompt" >> /root/.bashrc
+	echo "if [ \${EUID} -eq 0 ] ; then export PS1='\[\033[01;31m\]\h\[\033[01;34m\] \W \\$\[\033[00m\] ' ; else export PS1='\[\033[01;32m\]\u@\h\[\033[01;34m\] \w \\$\[\033[00m\] ' ; fi" >> /root/.bashrc
+
 	#Postfix changes
 	echo "`dnsdomainname`" > /etc/mailname
 	sed -i s/#myorigin/myorigin/g /etc/postfix/main.cf
 	sed -i s/mydestination\ =/mydestination\ =\ `dnsdomainname`,/g /etc/postfix/main.cf
 	sed -i s/mynetworks\ =/mynetworks\ =\ $NETWORK\\/24,/g /etc/postfix/main.cf
 	/etc/init.d/postfix reload &>/dev/null
-
-
-	#Setting up bash colouring
-	echo "#Setting decent colour prompt" >> /home/dpadmin/.bashrc
-	echo "if [ \${EUID} -eq 0 ] ; then export PS1='\[\033[01;31m\]\h\[\033[01;34m\] \W \\$\[\033[00m\] ' ; else export PS1='\[\033[01;32m\]\u@\h\[\033[01;34m\] \w \\$\[\033[00m\] ' ; fi" >> /home/dpadmin/.bashrc
-	echo "#Setting decent colour prompt" >> /root/.bashrc
-	echo "if [ \${EUID} -eq 0 ] ; then export PS1='\[\033[01;31m\]\h\[\033[01;34m\] \W \\$\[\033[00m\] ' ; else export PS1='\[\033[01;32m\]\u@\h\[\033[01;34m\] \w \\$\[\033[00m\] ' ; fi" >> /root/.bashrc
-
 
 	#Set up highlighting and jump in vim
 	sed -i s/\"syntax\ on/syntax\ on/g /etc/vim/vimrc
