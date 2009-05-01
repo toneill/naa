@@ -20,10 +20,12 @@ export MOUNTPOINT=/media/update-drive
 export ERRORFILE="/var/log/update-system/mount-update-drive-error-`date +%Y%m%d%H%M`"
 export COMPLETEFILE="/var/log/update-system/system-update-completed-`date +%Y%m%d%H%M`"
 
+#Make it more pretty by adding an extra blank line at the beginning
+echo ""
+
 #Check that we're root
 if [ $EUID != 0 ]
 then
-	echo ""
 	echo "You must run this as root, prepend sudo."
 	echo "Exiting."
 	echo ""
@@ -108,7 +110,6 @@ then
 	echo ""
 	sleep 1
 else
-	echo ""
 	echo "Ahh.. have you plugged in the device and turned it on??" 
 	echo "Exiting."
 	echo ""
