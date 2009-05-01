@@ -84,14 +84,14 @@ then
 	then
 		if [ "$DISTRO" == "Ubuntu" ]
 		then
-			echo "deb file:///data/debs/$DISTRO $RELEASE main restricted universe multiverse" > /etc/apt/sources.list
-			echo "deb file:///data/debs/$DISTRO $RELEASE-updates main restricted universe multiverse" >> /etc/apt/sources.list
-			echo "deb file:///data/debs/$DISTRO $RELEASE-security main restricted universe multiverse" >> /etc/apt/sources.list
+			echo "deb file:///data/debs/ubuntu $RELEASE main restricted universe multiverse" > /etc/apt/sources.list
+			echo "deb file:///data/debs/ubuntu $RELEASE-updates main restricted universe multiverse" >> /etc/apt/sources.list
+			echo "deb file:///data/debs/ubuntu $RELEASE-security main restricted universe multiverse" >> /etc/apt/sources.list
 		elif [ "$DISTRO" == "Debian" ]
 		then
-			echo "deb file:///data/debs/$DISTRO $RELEASE main contrib non-free" > /etc/apt/sources.list
-			echo "deb file:///data/debs/$DISTRO $RELEASE-updates main contrib non-free" >> /etc/apt/sources.list
-			echo "deb file:///data/debs/$DISTRO $RELEASE-security main contrib non-free" >> /etc/apt/sources.list
+			echo "deb file:///data/debs/debian $RELEASE main contrib non-free" > /etc/apt/sources.list
+			echo "deb file:///data/debs/debian $RELEASE-updates main contrib non-free" >> /etc/apt/sources.list
+			echo "deb file:///data/debs/debian $RELEASE-security main contrib non-free" >> /etc/apt/sources.list
 		fi
 	fi
 	apt-get -qq update &>/dev/null

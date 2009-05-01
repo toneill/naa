@@ -106,6 +106,7 @@ if [ -n "$DEVICE" ]
 then
 	echo "Device exists, that's a good start."
 	echo ""
+	sleep 1
 else
 	echo ""
 	echo "Ahh.. have you plugged in the device and turned it on??" 
@@ -116,6 +117,8 @@ fi
 
 #Check if the mount point exists, if not, create it.
 echo "Attempting to mount external unit.."
+echo ""
+sleep 1
 if [ ! -e "$MOUNTPOINT" ]
 then
 	mkdir -p $MOUNTPOINT
@@ -135,6 +138,7 @@ if [ -n "`cat /proc/mounts |grep $DEVICE |grep $MOUNTPOINT`" ]
 	then
 		echo "Mounted successfully."
 		echo ""
+		sleep 2
 	else
 		echo "Could not mount unit, please fix."
 		echo ""
