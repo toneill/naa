@@ -75,7 +75,7 @@ export DEVICE="`ls -l /dev/disk/by-uuid/$DEVICEUUID 2>/dev/null |awk {'print $10
 MOUNTED="`df -h |grep $DEVICE 2>/dev/null |awk {'print $6'}`"
 
 #Check to see if this command is being run from the drive. If it is, exit. If not, continue.
-if [ -n "`ps x |grep $MOUNTPOINT 2>/dev/null`" -o -n "`pwd |grep $MOUNTPOINT 2>/dev/null`" -o -n "`df -h . |grep $DEVICE`" -o -n "`for x in $MOUNTED ; do ps ax |grep [u]pdate-system |grep $x 2>/dev/null ; done`" ]
+if [ -n "`ps x |grep $MOUNTPOINT |grep -v grep 2>/dev/null`" -o -n "`pwd |grep $MOUNTPOINT 2>/dev/null`" -o -n "`df -h . |grep $DEVICE`" -o -n "`for x in $MOUNTED ; do ps ax |grep [u]pdate-system |grep $x |grep -v grep 2>/dev/null ; done`" ]
 then
 	mkdir /tmp/mount-external-drive &>/dev/null
 	mount $DEVICE /tmp/mount-external-drive &>/dev/null
