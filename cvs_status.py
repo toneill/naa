@@ -4,24 +4,12 @@
 import os
 from send_email import send_email
 
-#Constants
-FILENAME = "filename"
-STATUS = "status"
-WORKING_REV = "wrevision"
-REPO_REV = "rrevision"
-REPO_FILENAME = "rfilename"
-STICKY_TAG = "stag"
-STICKY_DATE = "sdate"
-STICKY_OPTIONS = "soptions"
-REV_DATE = "rdate"
-REV_AUTHOR = "rauth"
-REV_COMMENTS = "rcomments"
+#Global Variables
+DEBUG = False
+CVS_HELPER_CMD= '/home/dpuser/scripts/python/cvs_helper.sh'
+ignore_status_flags = ('Up-to-date','Locally Modified')
 
-DEBUG = True
-GET_CVS_STATUS_CMD= '/home/dpuser/scripts/python/cvs_helper.sh'
-good_status_flags = ('Up-to-date','Locally Modified')
-
-#cvs_repos is a dictionary of repo path -> (repo name, cvsroot). e.g. {'dpr-testing':('DPR Testing Branch',CVSROOT),'dpr':'DPR Stable Branch'}
+#cvs_repos is a dictionary of repo path -> (repo name, cvsroot). e.g. {'dpr-testing':('DPR Testing Branch','CVSROOT'),'dpr':'DPR Stable Branch'}
 cvs_repos = {
 		'/home/dpuser/build/dpr_testing':('DPR Testing Branch','/cvsroot/dpr/dpr/'),
 		'/home/dpuser/build/dpr':('DPR Stable Branch','/cvsroot/dpr/dpr/'),
@@ -48,10 +36,23 @@ Sticky Options: %(soptions)s
 """
 
 list_output = """=============================
-Filename: %(filename)s		Statue: %(status)s 
+Filename: %(filename)s		Status: %(status)s 
 Revision: %(rrevision)s		Date: %(rdate)s		Author: %(rauth)s
 Comments: 
 """
+
+#Constants
+FILENAME = "filename"
+STATUS = "status"
+WORKING_REV = "wrevision"
+REPO_REV = "rrevision"
+REPO_FILENAME = "rfilename"
+STICKY_TAG = "stag"
+STICKY_DATE = "sdate"
+STICKY_OPTIONS = "soptions"
+REV_DATE = "rdate"
+REV_AUTHOR = "rauth"
+REV_COMMENTS = "rcomments"
 
 def parse_status(output):
 	inItem = False
@@ -69,7 +70,7 @@ def parse_status(output):
 			tmpStr = line.split(':')
 			status = tmpStr[-1].strip()
 			filename = tmpStr[1].replace("Status","").strip()
-			if status in good_status_flags:
+			if status in ignore_status_flags:
 				inItem = False
 			else:
 				inItem = True
@@ -176,11 +177,11 @@ def generate_report(results, repo):
 	send_email(email_from, email_to, email_subject % (cvs_repos[repo][0]), msg, email_attachments, email_server)
 
 def get_cvs_status(repo):
-	output = os.popen("%s %s %s" % (GET_CVS_STATUS_CMD, "status", repo))
+	output = os.popen("%s %s %s" % (CVS_HELPER_CMD, "status", repo))
 	return output
 
 def get_cvs_log(repo, filename, revision):
-	output = os.popen("%s %s %s %s %s" % (GET_CVS_STATUS_CMD, "revision", repo, filename, revision))
+	output = os.popen("%s %s %s %s %s" % (CVS_HELPER_CMD, "revision", repo, filename, revision))
 	return output
 
 def main():
