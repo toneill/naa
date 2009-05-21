@@ -16,9 +16,9 @@ cvs -z3 -d:extssh:csmart@xena.cvs.sourceforge.net:/cvsroot/xena co -P archive au
 
 # Check out DPR
 echo "Checking out DPR from *urgh* CVS *urgh*.."
-cvs -z3 -d:extssh:csmart@dpr.cvs.sourceforge.net:/cvsroot/dpr co -P RollingChecker manifest sophos-bridge &>/dev/null
-#Because DPR is being re-designed, grab the new branch for dpr and fakebridge
-cvs -z3 -d:extssh:csmart@dpr.cvs.sourceforge.net:/cvsroot/dpr co -r dpr_redesign -P dpr fake-bridge &>/dev/null
+cvs -z3 -d:extssh:csmart@dpr.cvs.sourceforge.net:/cvsroot/dpr co -P dpr fake-bridge manifest RollingChecker &>/dev/null
+#To get the testing branch, uncomment the following
+#cvs -z3 -d:extssh:csmart@dpr.cvs.sourceforge.net:/cvsroot/dpr co -r testing -P dpr fake-bridge &>/dev/null
 
 
 #Bypass up MANIFEST.MF issue
