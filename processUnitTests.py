@@ -16,11 +16,13 @@ import sys
 from send_email import send_email
 
 failMap = {}
-#DEBUG = True
-DEBUG = False
+DEBUG = True
+#DEBUG = False
 results_base = "/home/dpuser/build/dpr/dist/results/"
 BUILD_SUCCESSFUL = "BUILD SUCCESSFUL"
 BUILD_FAILED = "BUILD FAILED"
+
+subject_heading = "Title"
 
 #EMAIL SETTINGS
 email_from = "dpuser@naa.gov.au"
@@ -57,7 +59,7 @@ def generateReport():
 	process_attachments(email_attachments)
 
 	#send the email
-	send_email(email_from, email_to, email_subject, email_msg, email_attachments, email_server)
+	send_email(email_from, email_to, subject_heading + " - " + email_subject, email_msg, email_attachments, email_server)
 
 def processLine(failLine):
 	if DEBUG:
@@ -70,8 +72,13 @@ def processLine(failLine):
 		failMap[failLine] = filename
 
 def main():
+	global subject_heading
 	if len(sys.argv) > 1:
 		results_base = str(sys.argv[1])
+		subject_heading = str(sys.argv[2])
+	if DEBUG:
+		print 'Results Base:', results_base
+		print 'Title:', subject_heading
 
 	#Read a line from stdin and process it.
 	failLine = sys.stdin.readline()

@@ -6,12 +6,17 @@ FALSE=0
 
 #DEBUG
 DEBUG=$TRUE
+#ACTIVATE_CO_HACK=$FALSE
 ACTIVATE_CO_HACK=$TRUE
 
 BUILDLOC="/home/dpuser/build/"
 SCRIPTLOC="/home/dpuser/scripts/"
 PROCESSING_SCRIPT="$SCRIPTLOC/python/processUnitTests.py"
+CHECK_CVS_STATUS_SCRIPT="$SCRIPTLOC/python/cvs_status.py"
 DPR_TEST_RESULTS_LOC="$BUILDLOC/dpr/dist/results/"
+DPR_TESTING_TEST_RESULTS_LOC="$BUILDLOC/dpr_testing/dist/results/"
+DPR_TEST_TITLE="DPR Stable"
+DPR_TESTING_TEST_TITLE="DPR Testing"
 LAST_RUN_FILE="/home/dpuser/.last"
 
 if [ -n "$1" ]
@@ -23,7 +28,8 @@ fi
 
 CVS_USERNAME="matthewoliver"
 XENA_MODULES="archive audio basic csv dataset email example_plugin html image multipage naa office pdf plaintext plugin_howto postscript project psd website xena xml"
-DPR_MODULES="RollingChecker manifest sophos-bridge"
+DPR_MODULES="RollingChecker manifest sophos-bridge dpr"
+DPR_TESTING_MODULES="dpr"
 DPR_REDESIGN_MODULES="dpr" # fake-bridge"
 
 function runCmd() {
@@ -35,6 +41,9 @@ function runCmd() {
 		$cmd &> /dev/null
 	fi
 }
+
+# Lets piggy back of this script and run the new Check CVS Status scripts..
+$CHECK_CVS_STATUS_SCRIPT
 
 #Clear the last run file and add a heading
 echo "Run DPR Tests" > $LAST_RUN_FILE
@@ -60,6 +69,7 @@ fi
 mkdir $BUILDLOC &>/dev/null
 cd $BUILDLOC
 
+
 function updateXena() {
 	if [ -e xena ]
 	then
@@ -80,7 +90,7 @@ updateXena
 function updateDPR() {
 	if [ -e dpr ]
 	then
-		for x in $DPR_MODULES $DPR_REDESIGN_MODULES
+		for x in $DPR_MODULES
 		do
 			cd $x
 			runCmd "cvs update" 
@@ -89,12 +99,32 @@ function updateDPR() {
 	else
 		# Check out DPR
 		echo "Checking out DPR from *urgh* CVS *urgh*.."
-		runCmd "cvs -z3 -d:extssh:$CVS_USERNAME@dpr.cvs.sourceforge.net:/cvsroot/dpr co -P $DPR_MODULES $DPR_REDESIGN_MODULES"
+		runCmd "cvs -z3 -d:extssh:$CVS_USERNAME@dpr.cvs.sourceforge.net:/cvsroot/dpr co -P $DPR_MODULES"
 		#Because DPR is being re-designed, grab the new branch for dpr and fakebridge
 		#runCmd "cvs -z3 -d:extssh:$CVS_USERNAME@dpr.cvs.sourceforge.net:/cvsroot/dpr co -r dpr_redesign -P $DPR_REDESIGN_MODULES"
 	fi
 }
 updateDPR
+
+
+function updateDPRTesting() {
+	if [ -e dpr_testing ]
+	then
+		for x in dpr_testing
+		do
+			cd $x
+			runCmd "cvs update" 
+			cd ..
+		done
+	else
+		# Check out DPR
+		echo "Checking out DPR Testing from *urgh* CVS *urgh*.."
+		runCmd "cvs -z3 -d:extssh:$CVS_USERNAME@dpr.cvs.sourceforge.net:/cvsroot/dpr co -d dpr_testing -r testing -P $DPR_TESTING_MODULES"
+		#Because DPR is being re-designed, grab the new branch for dpr and fakebridge
+		#runCmd "cvs -z3 -d:extssh:$CVS_USERNAME@dpr.cvs.sourceforge.net:/cvsroot/dpr co -r dpr_redesign -P $DPR_REDESIGN_MODULES"
+	fi
+}
+updateDPRTesting
 
 function checkFailed() {
 	msg="$1"
@@ -117,34 +147,50 @@ runCmd "ant -f build_plugins.xml"
 checkFailed "Xena Plugins failed to build." $?
 cd ..
 
-# Build DPR
-echo "Building DPR.."
+# Build DPR stable
+echo "Building DPR Stable.."
 cd dpr
 runCmd "ant init"
-checkFailed "Xena failed to init." $?
+checkFailed "DPR failed to init." $?
 runCmd "ant dist"
-checkFailed "Xena failed to build." $?
+checkFailed "DPR failed to build." $?
 cd ..
 
-#Building fake-bridge
-#echo "Building Fake-bridge.."
-#cd fake-bridge
-#runCmd "ant"
-#checkFailed "Fake-bridge failed to build." $?
-#cd ..
+# Build DPR testing
+echo "Building DPR Testing.."
+cd dpr_testing
+runCmd "ant init"
+checkFailed "DPR testing failed to init." $?
+runCmd "ant dist"
+checkFailed "DPR testing failed to build." $?
+cd ..
 
-# Move xena plugins to DPR
+# Move xena plugins to DPR and DPR Testing
 echo "Moving Xena plugins to DPR.."
 cd xena
 runCmd "ant -f build_plugins.xml send_to_dpr"
 checkFailed "Failed to move Xena plugins." $?
 cd ..
+echo "Moving Xena plugins to DPR Testing..."
+cd dpr
+runCmd "cp -R plugins ../dpr_testing/plugins"
+checkFailed "Failed to move plugins to DPR Testing." $?
+runCmd "cp -R dist/plugins ../dpr_testing/dist/plugins"
+checkFailed "Failed to move plugins to DPR Testing." $?
+cd ..
 
-# Run the DPR tests.
+# Run the DPR tests on stable.
 echo "Running DPR Tests.."
 cd dpr
-ant $DPR_TEST_TARGET 2>&1 | $PROCESSING_SCRIPT $DPR_TEST_RESULTS_LOC
+ant $DPR_TEST_TARGET 2>&1 | $PROCESSING_SCRIPT $DPR_TEST_RESULTS_LOC "$DPR_TEST_TITLE"
 checkFailed "Failed to run the DPR tests." $?
+cd ..
+
+# Run the DPR tests on testing.
+echo "Running DPR Testing Tests.."
+cd dpr_testing
+ant $DPR_TEST_TARGET 2>&1 | $PROCESSING_SCRIPT $DPR_TESTING_TEST_RESULTS_LOC "$DPR_TESTING_TEST_TITLE"
+checkFailed "Failed to run the DPR Testing tests." $?
 
 #Append the finish date to last run file
 echo "Finished: `date`" >> ~/.last
