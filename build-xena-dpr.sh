@@ -109,7 +109,7 @@ fi
 #Building checksum-checker
 echo "Building Rolling Checksum Checker.."
 cd ../RollingChecker
-ant >/dev/null
+ant dist >/dev/null
 #ant &>/dev/null
 
 if [ $? != 0 ]
