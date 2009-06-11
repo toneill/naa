@@ -1,0 +1,29 @@
+#!/bin/bash
+
+#Move nightly builds to the local FTP server.
+BUILDLOC="/home/dpuser/build/"
+FTP_BUILD_DIR="/home/ftp/builds"
+FTP_BUILD_STABLE="$FTP_BUILD_DIR/stable"
+FTP_BUILD_TESTING="$FTP_BUILD_DIR/testing"
+
+if [ -e $FTP_BUILD_DIR ]
+then
+	#first clean the locations
+	rm -Rf $FTP_BUILD_TESTING/*
+	rm -Rf $FTP_BUILD_STABLE/*
+
+	#Now move the contents of the dist dirs.
+	cd $FTP_BUILD_DIR
+	cp -a dpr/dist/* $FTP_BUILD_STABLE/
+	cp -a dpr_testing/dist/* $FTP_BUILD_TESTING/
+	cp -a xena/dist/* $FTP_BUILD_TESTING/
+	cp -a xena/dist/* $FTP_BUILD_STABLE/
+	cp -a RollingChecker/dist/* $FTP_BUILD_STABLE/
+	chown -R ftp:nogroup $FTP_BUILD_DIR/
+	cd $OLDPWD
+fi
+
+#Move to carrier
+rsync -a $FTP_BUILD_DIR /data/
+chown -Rf root:root /data/builds/
+chmod -Rf 755 /data/builds/
