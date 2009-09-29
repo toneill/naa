@@ -1,0 +1,6 @@
+
+Xena requires some external applications to process certain files, such as flac for audio, readpst for outlook files and tesseract-ocr to create searchable text versions.
+
+For Windows, we build these using Cygwin. Here is the source for each.
+
+Install Cygwin with the usual make tools, gcc, make, etc. Also add libtiff for compressed TIFF support in tesseract-ocr.
