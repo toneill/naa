@@ -11,10 +11,12 @@ libpst:
 * Install the following in the Cygwin environment:
 libiconv 
 python
+boost
+boost-devel
 
 tesseract-ocr:
-* Configure output location during build? Looking for /usr/local/share/
-
+*The installer should set environment variable
+TESSDATA_PREFIX=C:\Program Files\National Archive of Australia\Xena\winx86
 * Install the following in the Cygwin environment:
 libtiff
 * Include the following Cygwin dlls with binary:
