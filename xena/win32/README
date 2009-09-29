@@ -6,3 +6,25 @@ For Windows, we build these using Cygwin. Here is the source for each.
 Install Cygwin with the usual make tools, gcc, make, etc. Also add libtiff for compressed TIFF support in tesseract-ocr.
 
 You need to distribute the same cygwin1.dll file with the binaries, located in C:\cygwin\bin (or where ever you installed Cygwin).
+
+libpst:
+* Install the following in the Cygwin environment:
+libiconv 
+python
+
+tesseract-ocr:
+* Configure output location during build? Looking for /usr/local/share/
+
+* Install the following in the Cygwin environment:
+libtiff
+* Include the following Cygwin dlls with binary:
+cygtiff-5.dll
+cygz.dll
+cygtiff-5.dll
+cygjpeg-62.dll
+* Include the following directory from the build with binary:
+tessdata/eng.unicharset
+
+flac:
+* Install the following in the Cygwin environment:
+vorbis-tools
