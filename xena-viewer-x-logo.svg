@@ -8017,8 +8017,8 @@
    y1="55.401756"
    x2="114.41652"
    y2="118.73044" /></defs><sodipodi:namedview
-   inkscape:window-height="742"
-   inkscape:window-width="1097"
+   inkscape:window-height="826"
+   inkscape:window-width="1170"
    inkscape:pageshadow="2"
    inkscape:pageopacity="0.0"
    guidetolerance="10.0"
@@ -8029,18 +8029,18 @@
    pagecolor="#ffffff"
    id="base"
    showgrid="false"
-   inkscape:zoom="0.16334166"
-   inkscape:cx="135.53732"
-   inkscape:cy="161.66099"
+   inkscape:zoom="0.32668332"
+   inkscape:cx="314.92362"
+   inkscape:cy="273.05706"
    inkscape:window-x="106"
-   inkscape:window-y="224"
+   inkscape:window-y="140"
    inkscape:current-layer="Layer_1" />
 
 <g
    id="g3415"
-   inkscape:export-filename="C:\Documents and Settings\dpadmin\Desktop\xena-x-logo-64x64.png"
-   inkscape:export-xdpi="15.42"
-   inkscape:export-ydpi="15.42"><path
+   inkscape:export-filename="/home/chris/Desktop/xena-viewer-x-logo-16x16.png"
+   inkscape:export-xdpi="3.8699999"
+   inkscape:export-ydpi="3.8699999"><path
      transform="matrix(0.3762338,-0.5398737,0.6781534,0.3917471,-39.830163,594.3048)"
      d="m 801.05447,520.56274 c 0,115.17224 -128.72992,208.53778 -287.52633,208.53778 -158.79641,0 -287.52634,-93.36554 -287.52634,-208.53778 0,-115.17223 128.72993,-208.53778 287.52634,-208.53778 158.79641,0 287.52633,93.36555 287.52633,208.53778 z"
      sodipodi:ry="208.53778"
@@ -8075,10 +8075,10 @@
    style="fill:#cb2228" />
 		</g></g><g
    id="g4614"
-   transform="matrix(1.1775679,-0.26734148,0.26734148,1.1775679,-1309.8944,126.25882)"
-   inkscape:export-filename="C:\Documents and Settings\dpadmin\Desktop\xena-x-logo-64x64.png"
-   inkscape:export-xdpi="15.42"
-   inkscape:export-ydpi="15.42"><path
+   transform="matrix(0.99376908,-0.49570589,0.49570589,0.99376908,-1172.5827,566.93965)"
+   inkscape:export-filename="/home/chris/Desktop/xena-viewer-x-logo-16x16.png"
+   inkscape:export-xdpi="3.8699999"
+   inkscape:export-ydpi="3.8699999"><path
      transform="matrix(-2.1413682,0,0,2.1232338,1565.1753,526.60249)"
      style="opacity:0.75543476;fill:none;stroke:#000000;stroke-width:4.96460915;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;filter:url(#filter3538)"
      d="m 5.4074474,40.999996 c 0,19.095111 15.4974836,34.592592 34.5925936,34.592592 19.095109,0 34.592594,-15.497481 34.592594,-34.592592 0,-19.09511 -15.497485,-34.5925916 -34.592594,-34.5925916 -19.09511,0 -34.5925936,15.4974816 -34.5925936,34.5925916 z"
