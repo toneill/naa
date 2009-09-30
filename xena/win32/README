@@ -16,7 +16,7 @@ boost-devel
 
 tesseract-ocr:
 *The installer should set environment variable
-TESSDATA_PREFIX=C:\Program Files\National Archive of Australia\Xena\winx86
+TESSDATA_PREFIX=C:\Program Files\National Archives of Australia\Xena\winx86
 * Install the following in the Cygwin environment:
 libtiff
 * Include the following Cygwin dlls with binary:
