@@ -29,7 +29,7 @@
    inkscape:export-ydpi="15.14"><metadata
    id="metadata2490"><rdf:RDF><cc:Work
        rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
-         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title /></cc:Work></rdf:RDF></metadata><defs
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
    id="defs2488"><inkscape:perspective
    sodipodi:type="inkscape:persp3d"
    inkscape:vp_x="0 : 500 : 1"
@@ -8038,9 +8038,9 @@
 
 <g
    id="g3415"
-   inkscape:export-filename="C:\Documents and Settings\dpadmin\Desktop\xena-x-logo-16x16.png"
-   inkscape:export-xdpi="3.8699999"
-   inkscape:export-ydpi="3.8699999"><path
+   inkscape:export-filename="/home/chris/Desktop/xena-x-logo-64x64.png"
+   inkscape:export-xdpi="15.48"
+   inkscape:export-ydpi="15.48"><path
      transform="matrix(0.3762338,-0.5398737,0.6781534,0.3917471,-39.830163,594.3048)"
      d="m 801.05447,520.56274 c 0,115.17224 -128.72992,208.53778 -287.52633,208.53778 -158.79641,0 -287.52634,-93.36554 -287.52634,-208.53778 0,-115.17223 128.72993,-208.53778 287.52634,-208.53778 158.79641,0 287.52633,93.36555 287.52633,208.53778 z"
      sodipodi:ry="208.53778"
