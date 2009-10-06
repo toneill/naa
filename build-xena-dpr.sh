@@ -4,7 +4,7 @@ if [ "$1" == "help" ]
 then
 	echo ""
         echo "Pass in your sourceforge username and which branch you wish to check out (i.e. stable or testing)."
-        echo 'I.e. "./build-xena-dpr.sh $2 testing"'
+        echo 'I.e. "./build-xena-dpr.sh csmart testing"'
         echo ""
         exit 0
 
@@ -24,8 +24,8 @@ then
 	exit 1
 fi
 
-DATE=`date +%y%m%d%H%M`
-BUILDLOC=~/Desktop
+DATE=`date +%Y-%m-%d-%H:%M`
+BUILDLOC=~/Desktop/$2
 
 # Directory structure
 mkdir $BUILDLOC &>/dev/null
