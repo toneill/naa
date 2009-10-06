@@ -1,8 +1,31 @@
 #!/bin/bash
 
+if [ "$1" == "help" ]
+then
+	echo ""
+        echo "Pass in your sourceforge username and which branch you wish to check out (i.e. stable or testing)."
+        echo 'I.e. "./build-xena-dpr.sh $2 testing"'
+        echo ""
+        exit 0
+
+elif [ "$1" == "" ]
+then
+        echo ""
+        echo "You must tell me your sourceforge username. Exiting."
+        echo ""
+        exit 1
+fi
+
+if [ "$2" != "stable" -a "$2" != "testing" ]
+then
+        echo ""
+        echo "You must tell me which branch you want, stable or testing. Exiting"
+        echo ""
+	exit 1
+fi
+
 DATE=`date +%y%m%d%H%M`
 BUILDLOC=~/Desktop
-SCRIPTLOC=~/code/naa/
 
 # Directory structure
 mkdir $BUILDLOC &>/dev/null
@@ -12,10 +35,24 @@ cd source-$DATE
 
 # Check out Xena
 clear
-echo "Checking out Xena from *urgh* CVS *urgh*.."
+echo "Checking out Xena $2 from *urgh* CVS *urgh*.."
 echo ""
 sleep 2
-cvs -z3 -d:extssh:csmart@xena.cvs.sourceforge.net:/cvsroot/xena co -P archive audio basic csv dataset email example_plugin html image multipage naa office pdf plaintext plugin_howto postscript project psd website xena xml >/dev/null
+
+if [ $2 == testing ]
+then
+	cvs -z3 -d:extssh:$1@xena.cvs.sourceforge.net:/cvsroot/xena co -r testing -P archive audio basic csv dataset email example_plugin html image multipage naa office pdf plaintext plugin_howto postscript project psd website website-plugin xena xml
+
+	if [ $? != 0 ]
+	then
+		echo 'There was an error checking out Xena, sorry!'
+		echo ""
+		exit 1
+	fi
+
+else
+	cvs -z3 -d:extssh:$1@xena.cvs.sourceforge.net:/cvsroot/xena co -P archive audio basic csv dataset email example_plugin html image multipage naa office pdf plaintext plugin_howto postscript project psd website website-plugin xena xml
+fi
 
 if [ $? != 0 ]
 then
@@ -25,29 +62,34 @@ then
 fi
 
 clear
-echo "Checking out Xena from *urgh* CVS *urgh*.."
+echo "Checking out Xena $2 from *urgh* CVS *urgh*.."
 
 # Check out DPR (note, fake-bridge is now in test-utils)
-echo "Checking out DPR from *urgh* CVS *urgh*.."
+echo "Checking out DPR $2 from *urgh* CVS *urgh*.."
 echo ""
 sleep 2
-cvs -z3 -d:extssh:csmart@dpr.cvs.sourceforge.net:/cvsroot/dpr co -P dpr manifest RollingChecker >/dev/null
-#To get the testing branch, uncomment the following
-#cvs -z3 -d:extssh:csmart@dpr.cvs.sourceforge.net:/cvsroot/dpr co -r testing -P dpr &>/dev/null
-
-if [ $? != 0 ]
+if [ $2 == testing ]
 then
-	echo 'There was an error checking out DPR, sorry!'
-	echo ""
-	exit 1
+	cvs -z3 -d:extssh:$1@dpr.cvs.sourceforge.net:/cvsroot/dpr co -r testing -P dpr manifest RollingChecker
+	if [ $? != 0 ]
+	then
+		echo 'There was an error checking out DPR, sorry!'
+		echo ""
+		exit 1
+	fi
+else
+	cvs -z3 -d:extssh:$1@dpr.cvs.sourceforge.net:/cvsroot/dpr co -P dpr manifest RollingChecker
+	if [ $? != 0 ]
+	then
+		echo 'There was an error checking out DPR, sorry!'
+		echo ""
+		exit 1
+	fi
 fi
 
 clear
 echo "Checking out Xena from *urgh* CVS *urgh*.."
 echo "Checking out DPR from *urgh* CVS *urgh*.."
-
-#Bypass up MANIFEST.MF issue
-#cp -iv $SCRIPTLOC/ReprocessingJobImporter.java $BUILDLOC/source-$DATE/dpr/src/au/gov/naa/digipres/dpr/core/importexport/ReprocessingJobImporter.java
 
 # Build Xena
 echo "Building Xena.."
