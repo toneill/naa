@@ -1,19 +1,12 @@
 #!/bin/bash
 
-if [ "$1" == "help" ]
+if [ "$1" == "help" -o "$1" == "" ]
 then
 	echo ""
-        echo "Pass in your sourceforge username and which branch you wish to check out (i.e. stable or testing)."
+        echo "Please pass in your sourceforge username and the branch that you wish to check out (i.e. stable or testing)."
         echo 'I.e. "./build-xena-dpr.sh csmart testing"'
         echo ""
         exit 0
-
-elif [ "$1" == "" ]
-then
-        echo ""
-        echo "You must tell me your sourceforge username. Exiting."
-        echo ""
-        exit 1
 fi
 
 if [ "$2" != "stable" -a "$2" != "testing" ]
@@ -28,7 +21,7 @@ DATE=`date +%Y-%m-%d-%H:%M`
 BUILDLOC=~/Desktop/$2
 
 # Directory structure
-mkdir $BUILDLOC &>/dev/null
+mkdir -p $BUILDLOC &>/dev/null
 cd $BUILDLOC
 mkdir source-$DATE
 cd source-$DATE
