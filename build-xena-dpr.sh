@@ -7,6 +7,13 @@ then
         echo 'I.e. "./build-xena-dpr.sh csmart testing"'
         echo ""
         exit 0
+elif [ "$1" == "testing" -o "$1" == "stable" ]
+then
+	echo ""
+	echo "You should tell me your username first, then the branch you want.."
+	echo "Exiting."
+	echo ""
+	exit 1
 fi
 
 if [ "$2" != "stable" -a "$2" != "testing" ]
