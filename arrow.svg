@@ -29,7 +29,7 @@
    inkscape:export-ydpi="15.14"><metadata
    id="metadata2490"><rdf:RDF><cc:Work
        rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
-         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title /></cc:Work></rdf:RDF></metadata><defs
    id="defs2488"><linearGradient
    x1="-0.07032413"
    y1="25.541344"
@@ -12534,8 +12534,8 @@
    id="rect3158"
    width="468.34348"
    height="400.99997"
-   x="316.90839"
-   y="289.83212" /><path
+   x="-122.35493"
+   y="285.24051" /><path
    style="fill:url(#linearGradient2424);fill-opacity:1;stroke:url(#linearGradient3176);stroke-opacity:1;stroke-width:5;stroke-miterlimit:4;stroke-dasharray:none"
    d="m 700.90607,535.91829 -119.20766,8.57935 c 0,0 23.09946,-43.21337 20.65259,-38.63612 -59.50227,-39.39077 -136.55517,-17.44454 -172.09873,49.03762 -15.42469,-10.21218 -30.85232,-20.4269 -46.27686,-30.63615 50.81111,-95.03191 160.94889,-126.41596 246.01906,-70.09946 l 20.80736,-38.91617 50.10424,120.67093 z"
    id="path5799"
