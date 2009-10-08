@@ -17,7 +17,7 @@ then
 	exit 1
 fi
 
-DATE=`date +%Y-%m-%d-%H:%M`
+DATE=`date +%Y-%m-%d-%H%M`
 BUILDLOC=~/Desktop/$2
 
 # Directory structure
