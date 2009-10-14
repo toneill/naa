@@ -15,8 +15,11 @@
    sodipodi:version="0.32"
    inkscape:version="0.46+devel"
    version="1.0"
-   sodipodi:docname="New document 1"
-   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+   sodipodi:docname="icon.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   inkscape:export-filename="/home/chris/code/naa/manifest/images/icon-8x8.png"
+   inkscape:export-xdpi="1.41"
+   inkscape:export-ydpi="1.41">
   <defs
      id="defs4">
     <inkscape:perspective
