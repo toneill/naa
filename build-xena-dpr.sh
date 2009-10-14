@@ -10,8 +10,9 @@ then
 elif [ "$1" == "testing" -o "$1" == "stable" ]
 then
 	echo ""
-	echo "You should tell me your username first, then the branch you want.."
-	echo "Exiting."
+	echo "You should tell me your username first, then the branch you want."
+	echo "(Unless your username actually _is_ \""$1"\". Well, is it?)"
+	echo 'Try again!'
 	echo ""
 	exit 1
 fi
