@@ -58,6 +58,15 @@ then
 	CLAMD_PORT="$2"
 fi
 
+#Check to see if the port is already in use, if so, increment by one until we find something that's free
+while [ -n "`netstat -ltn |grep ":$CLAMD_PORT"`" ]
+do
+if [ -n "`netstat -ltn |grep ":$CLAMD_PORT"`" ]
+then
+	CLAMD_PORT=$(($CLAMD_PORT+1))
+fi
+done
+
 #Checking to see if required packages are installed or not
 echo "Checking for required packages.."
 echo ""
@@ -92,9 +101,12 @@ CLAMD_VERSION="`rpm -qa |grep clamav-server |awk -F "-" {'print $3'} 2>/dev/null
 
 #Create clamav user if doesn't exist
 #This should be the user who wants to talk to clamd, else user clamav must have read (and possibly write) access on the files.
-if [ -z "`id $CLAMD_USER`" ]
+echo "Checking for clamav user, $CLAMD_USER."
+echo ""
+
+if [ -z "`id $CLAMD_USER 2>/dev/null`" ]
 then
-	useradd $CLAMD_USER -r -c "User for clamd" -d /dev/null -M -s /sbin/nologin
+	useradd $CLAMD_USER -r -c "User for clamd" -d /dev/null -M -s /sbin/nologin 2>/dev/null
 	if [ $? != 0 ]
 	then
 		echo "Unable to create new clamd user, $CLAMD_USER, sorry."
@@ -102,6 +114,10 @@ then
 		echo "Exiting."
 		echo ""
 		exit 1
+	else
+		echo "Created new user, $CLAMD_USER."
+		echo ""
+	fi
 else
 	echo "User already exists, continuing."
 	echo ""
@@ -112,6 +128,7 @@ CLAMD_CONFIG="/etc/clamd.d/$CLAMD_USER.conf"
 
 #Copy and configure clamd configuration file
 echo "Configuring clamd to do all the right things.."
+echo ""
 
 #Try to remove existing config, whether it exists or not because 'cp' is aliased with -i
 rm -f $CLAMD_CONFIG 2>/dev/null
@@ -145,6 +162,7 @@ fi
 if [ -d /etc/logrotate.d ]
 then
 	echo "Configuring log rotation for clamd.."
+	echo ""
 	CLAMD_LOGROTATE=/etc/logrotate.d/clamd-$CLAMD_USER
 
 	if [ -f /usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.logrotate ]
@@ -160,6 +178,7 @@ then
 		echo ""
 		echo "Skipping log rotate configuration."
 		echo ""
+	fi
 fi
 
 #Set variable for clamd sysconfig
@@ -167,6 +186,7 @@ CLAMD_SYSCONFIG="/etc/sysconfig/clamd.$CLAMD_USER"
 
 #Configuring clamd under sysconfig
 echo "Configuring clamd under syconfig.."
+echo ""
 
 #Try to remove existing config, whether it exists or not because 'cp' is aliased with -i
 rm -f $CLAMD_SYSCONFIG 2>/dev/null
@@ -193,6 +213,7 @@ CLAMD_INIT="/etc/init.d/clamd.$CLAMD_USER"
 
 #Configuring clamd init script
 echo "Configuring clamd init script.."
+echo ""
 
 #Try to remove existing config, whether it exists or not because 'cp' is aliased with -i
 rm -f $CLAMD_INIT 2>/dev/null
@@ -248,8 +269,8 @@ then
 fi
 
 #Print summary
-echo "The clamd service has been successfully installed and configured."
-echo "User: '$CLAMD_USER' Port: '$CLAMD_PORT'"
+echo "The clamd service has been successfully installed and configured with:"
+echo "User '$CLAMD_USER' on port '$CLAMD_PORT'"
 echo ""
 echo 'Have fun!'
 echo ""
