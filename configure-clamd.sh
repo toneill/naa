@@ -127,7 +127,7 @@ then
 	echo "**WARNING** Removing clamd instance for user '$CLAMD_USER'."
 	echo "If you do NOT want to proceed, hit CTRL+C within 5 seconds..."
 	i=5
-	while [ $i -gt -1 ]
+	while [ $i -gt 0 ]
 	do
 		sleep 1
 		echo -ne "$i.. "
@@ -148,7 +148,7 @@ then
 
 	#Stop and disable daemon
 	$CLAMD_INIT stop &>/dev/null
-	if [ "$?" != "0" ]
+	if [ $? -ne 0 ]
 	then
 		echo "Could not stop service, sorry."
 		echo ""
@@ -181,7 +181,7 @@ then
 			#Remove user and confirm success
 			echo "OK, removing user '$CLAMD_USER' from the system."
 			userdel -r $CLAMD_USER 2>/dev/null
-			if [ "$?" == "0" -o "$?" == "12" ]
+			if [ $? -eq 0 -o $? -eq 12 ]
 			then
 				echo "User removed successfully."
 				echo ""
@@ -207,7 +207,7 @@ echo "Configuring clamd to run as user '$CLAMD_USER' on port '$CLAMD_PORT'."
 echo "If you do NOT want to proceed, hit CTRL+C within 5 seconds..."
 echo ""
 i=5
-while [ $i -gt -1 ]
+while [ $i -gt 0 ]
 do
 	sleep 1
 	echo -ne "$i.. "
@@ -262,7 +262,7 @@ echo "Checking for clamav user, '$CLAMD_USER'.."
 if [ -z "`id $CLAMD_USER 2>/dev/null`" ]
 then
 	useradd $CLAMD_USER -r -c "User for clamd" -d /dev/null -M -s /sbin/nologin 2>/dev/null
-	if [ $? != 0 ]
+	if [ $? -ne 0 ]
 	then
 		echo "Unable to create new clamd user, '$CLAMD_USER', sorry."
 		echo ""
@@ -369,7 +369,7 @@ sed -i 's/<SERVICE>/'$CLAMD_USER'/' $CLAMD_INIT
 ln -s /usr/sbin/clamd /usr/sbin/clamd.$CLAMD_USER 2>/dev/null
 $CLAMD_CHKCONFIG on
 #Check that was successful
-if [ $? != 0 ]
+if [ $? -ne 0 ]
 then
 	echo "Could not turn service on, sorry."
 	echo "Exiting."
@@ -399,7 +399,7 @@ chown $CLAMD_USER:$CLAMD_USER $CLAMD_PID/
 
 #Start services
 /etc/init.d/clamd.$CLAMD_USER start &>/dev/null
-if [ "$?" != "0" ]
+if [ $? -ne 0 ]
 then
 	echo "Could not start service, sorry."
 	echo "Continuing."
