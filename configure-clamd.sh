@@ -106,11 +106,17 @@ if [ $STATUS == "remove" ]
 then
 	echo "**WARNING** Removing clamd instance for user '$CLAMD_USER'."
 	echo "If you do NOT want to proceed, hit CTRL+C within 5 seconds..."
+	i=5
+	while [ $i -gt -1 ]
+	do
+		sleep 1
+		echo -ne "$i.. "
+		let i=i-1
+	done
 	echo ""
-	sleep 5
 	echo "OK then, proceeding.."
 	echo ""
-	
+
 	#Check to see if there's a configuration for that user already
 	if [ ! -e /etc/clamd.d/$CLAMD_USER.conf ]
 	then
@@ -120,8 +126,8 @@ then
 		exit 1
 	else
 		#Stop and disable daemon
-		/etc/init.d/clamd.$CLAMD_USER stop 2>/dev/null
-		if [ $? != 0 ]
+		/etc/init.d/clamd.$CLAMD_USER stop &>/dev/null
+		if [ "$?" != "0" ]
 		then
 			echo "Could not stop service, sorry."
 			echo ""
@@ -130,7 +136,7 @@ then
 			echo ""
 			exit 1
 		fi
-		/sbin/chkconfig clamd.$CLAMD_USER off 2>/dev/null
+		/sbin/chkconfig clamd.$CLAMD_USER off &>/dev/null
 		#Remove configs and logs, etc
 		rm -f /etc/clamd.d/$CLAMD_USER.conf 2>/dev/null
 		rm -f /etc/logrotate.d/clamd-$CLAMD_USER 2>/dev/null
@@ -142,6 +148,7 @@ then
 		if [ -n "`cat /etc/passwd |grep ^$CLAMD_USER`" ]
 		then
 			#User exists, so ask if it should be removed
+			echo ""
 			echo -e "**WARNING** DO YOU WANT TO REMOVE THE USER FROM THE SYSTEM? (y/N): \c "
 			read answer
 			echo ""
@@ -150,7 +157,7 @@ then
 				#Remove user and confirm success
 				echo "OK, removing user '$CLAMD_USER' from the system."
 				userdel -r $CLAMD_USER 2>/dev/null
-				if [ "$?" == "0" ]
+				if [ "$?" == "0" -o "$?" == "12" ]
 				then
 					echo "User removed successfully."
 					echo ""
@@ -166,7 +173,7 @@ then
 			echo "User does not exist in the system, not removing."
 			echo ""
 		fi
-	echo "Instance of clamd for user $CLAMD_USER has been successfully removed."
+	echo "Instance of clamd for user '$CLAMD_USER' has been successfully removed."
 	echo ""
 	fi
 else
@@ -174,7 +181,14 @@ else
 	echo "Configuring clamd to run as user '$CLAMD_USER' on port '$CLAMD_PORT'."
 	echo "If you do NOT want to proceed, hit CTRL+C within 5 seconds..."
 	echo ""
-	sleep 5
+	i=5
+	while [ $i -gt -1 ]
+	do
+		sleep 1
+		echo -ne "$i.. "
+		let i=i-1
+	done
+	echo ""
 	echo "OK then, proceeding.."
 	echo ""
 
@@ -199,6 +213,8 @@ else
 			echo ""
 		else
 			echo "Problem installing required packages, sorry."
+			echo ""
+			echo "Instance of clamd for user '$CLAMD_USER' NOT created successfully."
 			echo "Exiting."
 			echo ""
 			exit 1
@@ -210,14 +226,16 @@ else
 
 	#Create clamav user if doesn't exist
 	#This should be the user who wants to talk to clamd, else user clamav must have read (and possibly write) access on the files.
-	echo "Checking for clamav user, $CLAMD_USER.."
+	echo "Checking for clamav user, '$CLAMD_USER'.."
 
 	if [ -z "`id $CLAMD_USER 2>/dev/null`" ]
 	then
 		useradd $CLAMD_USER -r -c "User for clamd" -d /dev/null -M -s /sbin/nologin 2>/dev/null
 		if [ $? != 0 ]
 		then
-			echo "Unable to create new clamd user, $CLAMD_USER, sorry."
+			echo "Unable to create new clamd user, '$CLAMD_USER', sorry."
+			echo ""
+			echo "Instance of clamd for user '$CLAMD_USER' NOT created successfully."
 			echo "Exiting."
 			echo ""
 			exit 1
@@ -226,7 +244,7 @@ else
 			echo ""
 		fi
 	else
-		echo "User already exists."
+		echo "User already exists, not creating."
 		echo ""
 	fi
 
@@ -236,6 +254,22 @@ else
 	#Copy and configure clamd configuration file
 	echo "Configuring clamd to do all the right things.."
 
+	#Check that all required template files exist before continuing and set variables now that we know the version of clamav-server
+	CLAMD_CONFIG_TEMPLATE="/usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.conf"
+	CLAMD_SYSCONFIG_TEMPLATE="/usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.sysconfig"
+	CLAMD_INIT_TEMPLATE="/usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.init"
+	CLAMD_LOGROTATE_TEMPLATE="/usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.logrotate"
+	if [ ! -e "$CLAMD_CONFIG_TEMPLATE" -o  ! -e "$CLAMD_SYSCONFIG_TEMPLATE" -o ! -e "$CLAMD_INIT_TEMPLATE" -o ! -e "$CLAMD_LOGROTATE_TEMPLATE" ]
+	then
+		echo "Could not find required template files under /usr/share/doc/clamav-server-$CLAMD_VERSION/, sorry."
+		echo ""
+		echo "Instance of clamd for user '$CLAMD_USER' NOT created successfully."
+		echo "Exiting."
+		echo ""
+		exit 1
+	fi
+
+	#Check to see if an instance of clamd for user already exists
 	if [ -e $CLAMD_CONFIG ]
 	then
 		echo "Instance of clamd already exists, clobbering.."
@@ -255,27 +289,18 @@ else
 	echo "Port was already in use, using '$CLAMD_PORT' instead."
 	done
 
-	#Check that the template clamd.conf exists
-	if [ -f /usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.conf ]
-	then
-		#Make sure directory exists, which it should if clamav-server is installed (but you never know)
-		mkdir -p /etc/clamd.d 2>/dev/null
-		#Copy over the template file
-		cp -f /usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.conf $CLAMD_CONFIG 2>/dev/null
-		sed -i 's/clamd.<SERVICE>/clamd.'$CLAMD_USER'/' $CLAMD_CONFIG
-		sed -i 's/^Example/#Example/' $CLAMD_CONFIG
-		sed -i 's/^#LogFile/LogFile/' $CLAMD_CONFIG
-		sed -i 's/^#PidFile/PidFile/' $CLAMD_CONFIG
-		sed -i 's/^LocalSocket/#LocalSocket/' $CLAMD_CONFIG
-		sed -i 's/^#TCPSocket\ 3310/TCPSocket\ '$CLAMD_PORT'/' $CLAMD_CONFIG
-		sed -i 's/^#TCPAddr/TCPAddr/' $CLAMD_CONFIG
-		sed -i 's/<USER>/'$CLAMD_USER'/' $CLAMD_CONFIG
-	else
-		echo "Could not find clamd.conf template under /usr/share/doc/clamav-server-$CLAMD_VERSION/, sorry."
-		echo "Exiting."
-		echo ""
-		exit 1
-	fi
+	#Make sure directory exists, which it should if clamav-server is installed (but you never know)
+	mkdir -p /etc/clamd.d 2>/dev/null
+	#Copy over the template file
+	cp -f $CLAMD_CONFIG_TEMPLATE $CLAMD_CONFIG 2>/dev/null
+	sed -i 's/clamd.<SERVICE>/clamd.'$CLAMD_USER'/' $CLAMD_CONFIG
+	sed -i 's/^Example/#Example/' $CLAMD_CONFIG
+	sed -i 's/^#LogFile/LogFile/' $CLAMD_CONFIG
+	sed -i 's/^#PidFile/PidFile/' $CLAMD_CONFIG
+	sed -i 's/^LocalSocket/#LocalSocket/' $CLAMD_CONFIG
+	sed -i 's/^#TCPSocket\ 3310/TCPSocket\ '$CLAMD_PORT'/' $CLAMD_CONFIG
+	sed -i 's/^#TCPAddr/TCPAddr/' $CLAMD_CONFIG
+	sed -i 's/<USER>/'$CLAMD_USER'/' $CLAMD_CONFIG
 	echo "Done."
 	echo ""
 
@@ -284,19 +309,10 @@ else
 	then
 		echo "Configuring log rotation for clamd.."
 		CLAMD_LOGROTATE=/etc/logrotate.d/clamd-$CLAMD_USER
-
-		if [ -f /usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.logrotate ]
-		then
-			#Try to remove existing log rotate config, whether it exists or not because 'cp' is aliased with -i
-			rm -f $CLAMD_LOGROTATE 2>/dev/null
-			cp -f /usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.logrotate $CLAMD_LOGROTATE
-			sed -i 's/clamd.<SERVICE>/clamd.'$CLAMD_USER'/' $CLAMD_LOGROTATE
-		else
-			echo "Could not find logrotate template under /usr/share/doc/clamav-server-$CLAMAV_VERSION, sorry."
-			echo ""
-			echo "Skipping log rotate configuration."
-			echo ""
-		fi
+		#Try to remove existing log rotate config, whether it exists or not because 'cp' is aliased with -i
+		rm -f $CLAMD_LOGROTATE 2>/dev/null
+		cp -f $CLAMD_LOGROTATE_TEMPLATE $CLAMD_LOGROTATE
+		sed -i 's/clamd.<SERVICE>/clamd.'$CLAMD_USER'/' $CLAMD_LOGROTATE
 	fi
 	echo "Done."
 	echo ""
@@ -310,19 +326,10 @@ else
 	#Try to remove existing config, whether it exists or not because 'cp' is aliased with -i
 	rm -f $CLAMD_SYSCONFIG 2>/dev/null
 
-	#Check that the template exists
-	if [ -f /usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.sysconfig ]
-	then
-		#Copy over the template file
-		cp -f /usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.sysconfig $CLAMD_SYSCONFIG 2>/dev/null
-		sed -i 's/<SERVICE>/'$CLAMD_USER'/' $CLAMD_SYSCONFIG
-		sed -i 's/^#CLAMD/'CLAMD'/' $CLAMD_SYSCONFIG
-	else
-		echo "I can't find the sysconfig template under /usr/share/doc/clamav-server-$CLAMD_VERSION/, sorry."
-		echo "Exiting."
-		echo ""
-		exit 1
-	fi
+	#Copy over the template file
+	cp -f $CLAMD_SYSCONFIG_TEMPLATE $CLAMD_SYSCONFIG 2>/dev/null
+	sed -i 's/<SERVICE>/'$CLAMD_USER'/' $CLAMD_SYSCONFIG
+	sed -i 's/^#CLAMD/'CLAMD'/' $CLAMD_SYSCONFIG
 	echo "Done."
 	echo ""
 
@@ -335,24 +342,15 @@ else
 	#Try to remove existing config, whether it exists or not because 'cp' is aliased with -i
 	rm -f $CLAMD_INIT 2>/dev/null
 
-	#Check that the template exists
-	if [ -f /usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.init ]
+	#Copy over the init script
+	cp -f $CLAMD_INIT_TEMPLATE $CLAMD_INIT 2>/dev/null
+	sed -i 's/<SERVICE>/'$CLAMD_USER'/' $CLAMD_INIT
+	ln -s /usr/sbin/clamd /usr/sbin/clamd.$CLAMD_USER 2>/dev/null
+	/sbin/chkconfig clamd.$CLAMD_USER on
+	#Check that was successful
+	if [ $? != 0 ]
 	then
-		#Copy over the init script
-		cp -f /usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.init $CLAMD_INIT 2>/dev/null
-		sed -i 's/<SERVICE>/'$CLAMD_USER'/' $CLAMD_INIT
-		ln -s /usr/sbin/clamd /usr/sbin/clamd.$CLAMD_USER 2>/dev/null
-		/sbin/chkconfig clamd.$CLAMD_USER on
-		#Check that was successful
-		if [ $? != 0 ]
-		then
-			echo "Could not turn service on, sorry."
-			echo "Exiting."
-			echo ""
-			exit 1
-		fi
-	else
-		echo "I can't find the sysconfig template under /usr/share/doc/clamav-server-$CLAMD_VERSION/, sorry."
+		echo "Could not turn service on, sorry."
 		echo "Exiting."
 		echo ""
 		exit 1
@@ -381,8 +379,7 @@ else
 	chown $CLAMD_USER:$CLAMD_USER $CLAMD_PID/
 
 	#Start services
-	echo ""
-	/etc/init.d/clamd.$CLAMD_USER start
+	/etc/init.d/clamd.$CLAMD_USER start &>/dev/null
 	if [ $? != 0 ]
 	then
 		echo "Could not start service, sorry."
@@ -394,7 +391,7 @@ else
 
 	#Print summary
 	echo "The clamd service has been successfully installed and configured with:"
-	echo "User '$CLAMD_USER' on port '$CLAMD_PORT'"
+	echo "User '$CLAMD_USER' on port '$CLAMD_PORT'."
 	echo ""
 	echo 'Have fun!'
 	echo ""
