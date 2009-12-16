@@ -18,6 +18,26 @@
 
 #This script is for installing and configuring clam-server (clamd) on Fedora
 
+#Variables
+FEDORA_RELEASE="`cat /etc/fedora-release 2>/dev/null`"
+FRESHCLAM_CONF=/etc/freshclam.conf
+
+#These variables are set later, once we know the user
+CLAMD_USER=""
+CLAMD_CONFIG=""
+CLAMD_SYSCONFIG=""
+CLAMD_INIT=""
+CLAMD_LOGROTATE=""
+CLAMD_PID=""
+CLAMD_LOG=""
+
+#These variables are set later, once we know clamav-server version
+CLAMD_VERSION=""
+CLAMD_CONFIG_TEMPLATE=""
+CLAMD_SYSCONFIG_TEMPLATE=""
+CLAMD_INIT_TEMPLATE=""
+CLAMD_LOGROTATE_TEMPLATE=""
+
 #Make this more pretty by adding an extra blank line at the beginning
 echo ""
 
@@ -33,7 +53,7 @@ then
 	echo " -c creates an instance, overwriting if already exists."
 	echo " -r removes an instance."
 	echo ""
-	echo "Variables (optional):"
+	echo "Parameters (optional):"
 	echo " [username] pass in the username you want clamd to run as, defaults to 'clamav'."
 	echo " [port] pass in the port you want clamd to run on, defaults to '3310'."
 	echo ""
@@ -49,7 +69,6 @@ then
 fi
 
 #Check that we're running Fedora
-FEDORA_RELEASE="`cat /etc/fedora-release 2>/dev/null`"
 if [ -z "$FEDORA_RELEASE" ]
 then
 	echo "You don't appear to be running Fedora, sorry!"
@@ -59,7 +78,7 @@ then
 fi
 
 #We're running Fedora, so make sure we're root
-if [ $EUID != 0 ]
+if [ $EUID -ne 0 ]
 then
 	echo "You must run this as root. Prepend sudo, or run:"
 	echo "su -c '$0 [option] [username] [port]'"
@@ -70,14 +89,6 @@ then
 else
 	echo "You appear to be running `echo $FEDORA_RELEASE`, excellent."
 	echo ""
-fi
-
-#Are we removing or creating?
-if [ "$1" == "-r" ]
-then
-	STATUS="remove"
-else
-	STATUS="create"
 fi
 
 #Set clamd user and port
@@ -101,8 +112,17 @@ else
 	fi
 fi
 
-#Removing
-if [ $STATUS == "remove" ]
+#Variables for config files, now that we know the user
+CLAMD_CONFIG="/etc/clamd.d/$CLAMD_USER.conf"
+CLAMD_INIT="/etc/init.d/clamd.$CLAMD_USER"
+CLAMD_LOGROTATE="/etc/logrotate.d/clamd-$CLAMD_USER"
+CLAMD_PID="/var/run/clamd.$CLAMD_USER"
+CLAMD_LOG="/var/log/clamd.$CLAMD_USER"
+CLAMD_SYSCONFIG="/etc/sysconfig/clamd.$CLAMD_USER"
+CLAMD_CHKCONFIG="/sbin/chkconfig clamd.$CLAMD_USER"
+
+#Removing existing instance of clamd for specified user, if told to do so
+if [ "$1" == "-r" ]
 then
 	echo "**WARNING** Removing clamd instance for user '$CLAMD_USER'."
 	echo "If you do NOT want to proceed, hit CTRL+C within 5 seconds..."
@@ -118,7 +138,7 @@ then
 	echo ""
 
 	#Check to see if there's a configuration for that user already
-	if [ ! -e /etc/clamd.d/$CLAMD_USER.conf ]
+	if [ ! -e $CLAMD_CONFIG ]
 	then
 		echo "No clamd instance found for user '$CLAMD_USER'."
 		echo "Exiting."
@@ -127,7 +147,7 @@ then
 	fi	
 
 	#Stop and disable daemon
-	/etc/init.d/clamd.$CLAMD_USER stop &>/dev/null
+	$CLAMD_INIT stop &>/dev/null
 	if [ "$?" != "0" ]
 	then
 		echo "Could not stop service, sorry."
@@ -138,15 +158,16 @@ then
 		exit 1
 	fi
 
-	/sbin/chkconfig clamd.$CLAMD_USER off &>/dev/null
+	#Turn off daemon
+	$CLAMD_CHKCONFIG off &>/dev/null
 	
 	#Remove configs and logs, etc
-	rm -f /etc/clamd.d/$CLAMD_USER.conf 2>/dev/null
-	rm -f /etc/logrotate.d/clamd-$CLAMD_USER 2>/dev/null
+	rm -f $CLAMD_CONFIG 2>/dev/null
+	rm -f $CLAMD_LOGROTATE 2>/dev/null
 	rm -rf /var/run/clamd.$CLAMD_USER 2>/dev/null
 	rm -f /var/log/clamd.$CLAMD_USER 2>/dev/null
 	unlink /usr/sbin/clamd.$CLAMD_USER 2>/dev/null
-	rm -f /etc/init.d/clamd.$CLAMD_USER 2>/dev/null
+	rm -f $CLAMD_INIT 2>/dev/null
 	
 	#Remove user?
 	if [ -n "`id $CLAMD_USER 2>/dev/null`" ]
@@ -228,6 +249,12 @@ fi
 #Get version of clamd, now that it's installed
 CLAMD_VERSION="`rpm -qa |grep clamav-server |awk -F "-" {'print $3'} 2>/dev/null`"
 
+#Variables for template files now that we know the version of clamav-server installed
+CLAMD_CONFIG_TEMPLATE="/usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.conf"
+CLAMD_SYSCONFIG_TEMPLATE="/usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.sysconfig"
+CLAMD_INIT_TEMPLATE="/usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.init"
+CLAMD_LOGROTATE_TEMPLATE="/usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.logrotate"
+
 #Create clamav user if doesn't exist
 #This should be the user who wants to talk to clamd, else user clamav must have read (and possibly write) access on the files.
 echo "Checking for clamav user, '$CLAMD_USER'.."
@@ -252,17 +279,10 @@ else
 	echo ""
 fi
 
-#Set variable for clamd configuration location (which we know once we get the user)
-CLAMD_CONFIG="/etc/clamd.d/$CLAMD_USER.conf"
-
 #Copy and configure clamd configuration file
 echo "Configuring clamd to do all the right things.."
 
-#Check that all required template files exist before continuing and set variables now that we know the version of clamav-server
-CLAMD_CONFIG_TEMPLATE="/usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.conf"
-CLAMD_SYSCONFIG_TEMPLATE="/usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.sysconfig"
-CLAMD_INIT_TEMPLATE="/usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.init"
-CLAMD_LOGROTATE_TEMPLATE="/usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.logrotate"
+#Check that ALL required template files exist before continuing
 if [ ! -e "$CLAMD_CONFIG_TEMPLATE" -o  ! -e "$CLAMD_SYSCONFIG_TEMPLATE" -o ! -e "$CLAMD_INIT_TEMPLATE" -o ! -e "$CLAMD_LOGROTATE_TEMPLATE" ]
 then
 	echo "Could not find required template files under /usr/share/doc/clamav-server-$CLAMD_VERSION/, sorry."
@@ -284,11 +304,20 @@ then
 fi
 
 #Check to see if the port is already in use, if so, increment by one until we find something that's free
+PORT_INUSE=0
 while [ -n "`netstat -ltn |grep ":$CLAMD_PORT"`" ]
 do
 	CLAMD_PORT=$(($CLAMD_PORT+1))
+	PORT_INUSE=1
 done
-echo "Port was already in use, using '$CLAMD_PORT' instead."
+if [ $PORT_INUSE == 1 ]
+then
+	echo "Port was already in use, using '$CLAMD_PORT' instead."
+fi
+
+echo "user=$CLAMD_USER"
+echo "port=$CLAMD_PORT"
+read
 
 #Make sure directory exists, which it should if clamav-server is installed (but you never know)
 mkdir -p /etc/clamd.d 2>/dev/null
@@ -310,7 +339,6 @@ echo ""
 if [ -d /etc/logrotate.d ]
 then
 	echo "Configuring log rotation for clamd.."
-	CLAMD_LOGROTATE=/etc/logrotate.d/clamd-$CLAMD_USER
 
 	#Try to remove existing log rotate config, whether it exists or not because 'cp' is aliased with -i
 	rm -f $CLAMD_LOGROTATE 2>/dev/null
@@ -319,9 +347,6 @@ then
 fi
 echo "Done."
 echo ""
-
-#Set variable for clamd sysconfig
-CLAMD_SYSCONFIG="/etc/sysconfig/clamd.$CLAMD_USER"
 
 #Configuring clamd under sysconfig
 echo "Configuring clamd under syconfig.."
@@ -336,9 +361,6 @@ sed -i 's/^#CLAMD/'CLAMD'/' $CLAMD_SYSCONFIG
 echo "Done."
 echo ""
 
-#Set variable for clamd init script
-CLAMD_INIT="/etc/init.d/clamd.$CLAMD_USER"
-
 #Configuring clamd init script
 echo "Configuring clamd init script.."
 
@@ -349,7 +371,7 @@ rm -f $CLAMD_INIT 2>/dev/null
 cp -f $CLAMD_INIT_TEMPLATE $CLAMD_INIT 2>/dev/null
 sed -i 's/<SERVICE>/'$CLAMD_USER'/' $CLAMD_INIT
 ln -s /usr/sbin/clamd /usr/sbin/clamd.$CLAMD_USER 2>/dev/null
-/sbin/chkconfig clamd.$CLAMD_USER on
+$CLAMD_CHKCONFIG on
 #Check that was successful
 if [ $? != 0 ]
 then
@@ -362,7 +384,6 @@ echo "Done."
 echo ""
 
 #Configure freshclam
-FRESHCLAM_CONF=/etc/freshclam.conf
 echo "Enabling freshclam, the clamav updater.."
 sed -i 's/^Example/#Example/' $FRESHCLAM_CONF
 
@@ -372,13 +393,11 @@ echo ""
 
 echo "Creating required directories and starting service.."
 #Setup logs
-CLAMD_LOG=/var/log/clamd.$CLAMD_USER
 touch $CLAMD_LOG
 chown $CLAMD_USER:$CLAMD_USER $CLAMD_LOG
 chmod 0620 $CLAMD_LOG
 
 #Setup run socket
-CLAMD_PID=/var/run/clamd.$CLAMD_USER
 mkdir $CLAMD_PID 2>/dev/null
 chown $CLAMD_USER:$CLAMD_USER $CLAMD_PID/
 
