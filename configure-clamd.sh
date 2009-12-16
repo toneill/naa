@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2009 Christopher Smart <mail@christophersmart.com>
+# Copyright 2009 "Christopher Smart" <mail@christophersmart.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -148,7 +148,6 @@ then
 		if [ -n "`cat /etc/passwd |grep ^$CLAMD_USER`" ]
 		then
 			#User exists, so ask if it should be removed
-			echo ""
 			echo -e "**WARNING** DO YOU WANT TO REMOVE THE USER FROM THE SYSTEM? (y/N): \c "
 			read answer
 			echo ""
