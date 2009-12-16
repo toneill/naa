@@ -315,10 +315,6 @@ then
 	echo "Port was already in use, using '$CLAMD_PORT' instead."
 fi
 
-echo "user=$CLAMD_USER"
-echo "port=$CLAMD_PORT"
-read
-
 #Make sure directory exists, which it should if clamav-server is installed (but you never know)
 mkdir -p /etc/clamd.d 2>/dev/null
 
