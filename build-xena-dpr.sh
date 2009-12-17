@@ -42,7 +42,7 @@ sleep 2
 
 if [ $2 == testing ]
 then
-	cvs -z3 -d:extssh:$1@xena.cvs.sourceforge.net:/cvsroot/xena co -r testing -P archive audio basic csv dataset email example_plugin html image multipage naa office pdf plaintext plugin_howto postscript project psd website website-plugin xena xml
+	cvs -z3 -d:extssh:$1@xena.cvs.sourceforge.net:/cvsroot/xena co -r testing -P xena xena_plugins xena_extras
 
 	if [ $? != 0 ]
 	then
