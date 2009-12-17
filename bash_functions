@@ -3,13 +3,13 @@
 #Put this somewhere and source it in ~/.bashrc
 
 #Global Variables
-HOME_URL="home.christophersmart.com"
+HOME_URL="[fqdn]"
 PROXY_PORT=3128
 
 #Java stuff for Arch Linux
-export JAVA_HOME=/opt/java/jre
-export PATH=$PATH:/opt/java/jre/bin:/opt/openoffice/program:/usr/share/eclipse
-source /etc/bash_completion
+#export JAVA_HOME=/opt/java/jre
+#export PATH=$PATH:/opt/java/jre/bin:/opt/openoffice/program:/usr/share/eclipse
+#source /etc/bash_completion
 
 #Terminal stuff
 setterm -blength 0
