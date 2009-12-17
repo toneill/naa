@@ -19,8 +19,9 @@
 #This script is for installing and configuring clam-server (clamd) on Fedora
 
 #Variables
+COUNTDOWN_TIMEOUT=5
 FEDORA_RELEASE="`cat /etc/fedora-release 2>/dev/null`"
-FRESHCLAM_CONF=/etc/freshclam.conf
+FRESHCLAM_CONF="/etc/freshclam.conf"
 
 #These variables are set later, once we know the user
 CLAMD_USER=""
@@ -37,6 +38,18 @@ CLAMD_CONFIG_TEMPLATE=""
 CLAMD_SYSCONFIG_TEMPLATE=""
 CLAMD_INIT_TEMPLATE=""
 CLAMD_LOGROTATE_TEMPLATE=""
+
+#Functions
+countdown() {
+	i=$1
+	echo "If you do NOT want to proceed, hit CTRL+C within $i seconds..."
+	while [ $i -gt 0 ]
+	do
+		sleep 1
+		echo -ne "$i.. "
+		let i=i-1
+	done
+}
 
 #Make this more pretty by adding an extra blank line at the beginning
 echo ""
@@ -125,14 +138,7 @@ CLAMD_CHKCONFIG="/sbin/chkconfig clamd.$CLAMD_USER"
 if [ "$1" == "-r" ]
 then
 	echo "**WARNING** Removing clamd instance for user '$CLAMD_USER'."
-	echo "If you do NOT want to proceed, hit CTRL+C within 5 seconds..."
-	i=5
-	while [ $i -gt 0 ]
-	do
-		sleep 1
-		echo -ne "$i.. "
-		let i=i-1
-	done
+	countdown $COUNTDOWN_TIMEOUT
 	echo ""
 	echo "OK then, proceeding.."
 	echo ""
@@ -204,15 +210,8 @@ fi
 
 #Creating
 echo "Configuring clamd to run as user '$CLAMD_USER' on port '$CLAMD_PORT'."
-echo "If you do NOT want to proceed, hit CTRL+C within 5 seconds..."
 echo ""
-i=5
-while [ $i -gt 0 ]
-do
-	sleep 1
-	echo -ne "$i.. "
-	let i=i-1
-done
+countdown $COUNTDOWN_TIMEOUT
 echo ""
 echo "OK then, proceeding.."
 echo ""
@@ -308,6 +307,7 @@ PORT_INUSE=0
 while [ -n "`netstat -ltn |grep ":$CLAMD_PORT"`" ]
 do
 	CLAMD_PORT=$(($CLAMD_PORT+1))
+
 	PORT_INUSE=1
 done
 if [ $PORT_INUSE == 1 ]
