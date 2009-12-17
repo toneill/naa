@@ -169,11 +169,12 @@ then
 	
 	#Remove configs and logs, etc
 	rm -f $CLAMD_CONFIG 2>/dev/null
-	rm -f $CLAMD_LOGROTATE 2>/dev/null
-	rm -rf /var/run/clamd.$CLAMD_USER 2>/dev/null
-	rm -f /var/log/clamd.$CLAMD_USER 2>/dev/null
-	unlink /usr/sbin/clamd.$CLAMD_USER 2>/dev/null
 	rm -f $CLAMD_INIT 2>/dev/null
+	rm -f $CLAMD_LOGROTATE 2>/dev/null
+	rm -rf $CLAMD_PID 2>/dev/null
+	rm -f $CLAMD_LOG 2>/dev/null
+	rm -f $CLAMD_SYSCONFIG 2>/dev/null
+	unlink /usr/sbin/clamd.$CLAMD_USER 2>/dev/null
 	
 	#Remove user?
 	if [ -n "`id $CLAMD_USER 2>/dev/null`" ]
