@@ -4,12 +4,14 @@
 
 #Variables
 DATE=`date +%Y%d%m%H%m`
-LOG=/var/log/update-fedora-mirror-$DATE
+LOG=/var/log/update-fedora-mirror-$DATE.log
 
 #Variables - mirror
-LOCAL_MIRROR=/data/fedora
-FEDORA_MIRROR=mirror.aarnet.edu.au/fedora
-RPMFUSION_MIRROR=download1.rpmfusion.org/rpmfusion
+LOCAL_MIRROR=/data
+#Be careful of trailing fedora-enchilada directory if using another mirror instead of aarnet
+#FEDORA_MIRROR=mirror.aarnet.edu.au
+FEDORA_MIRROR=mirror.internode.on.net/fedora-enchilada
+RPMFUSION_MIRROR=download1.rpmfusion.org
 
 #Mirrors:
 #rsync://mirror.internode.on.net/fedora-enchilada
@@ -23,67 +25,87 @@ RELEASE_VERSION=12
 BASE_ARCH=x86_64
 
 #Variables - directory structures
-FEDORA_MAIN=linux/releases/$RELEASE_VERSION/Everything/$BASE_ARCH/os
-FEDORA_UPDATES=linux/updates/$RELEASE_VERSION/$BASE_ARCH
+FEDORA_IMAGES=fedora/linux/releases/$RELEASE_VERSION/Fedora/$BASE_ARCH/os
+FEDORA_MAIN=fedora/linux/releases/$RELEASE_VERSION/Everything/$BASE_ARCH/os
+FEDORA_UPDATES=fedora/linux/updates/$RELEASE_VERSION/$BASE_ARCH
 RPMFUSION_FREE=rpmfusion/free/fedora/releases/$RELEASE_VERSION/Everything/$BASE_ARCH/os
 RPMFUSION_FREE_UPDATES=rpmfusion/free/fedora/updates/$RELEASE_VERSION/$BASE_ARCH
 RPMFUSION_NONFREE=rpmfusion/nonfree/fedora/releases/$RELEASE_VERSION/Everything/$BASE_ARCH/os
 RPMFUSION_NONFREE_UPDATES=rpmfusion/nonfree/fedora/updates/$RELEASE_VERSION/$BASE_ARCH
 
 #Variables - excludes
-excludes="i386\nppc\nppc64\nsource\nSRPMS\ncore\nextras\ndebug"
-excludes_file=/tmp/rsync-excludes-$DATE
+EXCLUDES="i386\nppc\nppc64\nsource\nSRPMS\ncore\ndebug"
+EXCLUDES_FILE=/tmp/rsync-excludes-$DATE
+
+#Set Proxy
+export http_proxy="http://localhost:5865"
 
 #Create excludes file
-echo -e $excludes > $excludes_file
+echo -e $EXCLUDES > $EXCLUDES_FILE
 
 #Create directory structes, incase they don't exist already
-for x in $LOCAL_MIRROR/$FEDORA_MAIN $LOCAL_MIRROR/$FEDORA_UPDATES $LOCAL_MIRROR/$RPMFUSION_FREE $LOCAL_MIRROR/$RPMFUSION_FREE_UPDATES $LOCAL_MIRROR/$RPMFUSION_NONFREE $LOCAL_MIRROR/$RPMFUSION_NONFREE_UPDATES
+for x in $LOCAL_MIRROR/$FEDORA_IMAGES $LOCAL_MIRROR/$FEDORA_MAIN $LOCAL_MIRROR/$FEDORA_UPDATES $LOCAL_MIRROR/$RPMFUSION_FREE $LOCAL_MIRROR/$RPMFUSION_FREE_UPDATES $LOCAL_MIRROR/$RPMFUSION_NONFREE $LOCAL_MIRROR/$RPMFUSION_NONFREE_UPDATES
 do
 	mkdir -p $x &>/dev/null
 done
 
-#Fedora main repo
-#rsync -aH --exclude-from=$excludes_file --numeric-ids --delete --delete-after --delay-updates rsync://$FEDORA_MIRROR/$FEDORA_MAIN/ $LOCAL_MIRROR/$FEDORA_MAIN/
+#Fedora images repo
+rsync -PaH --exclude-from=$EXCLUDES_FILE --numeric-ids --delete --delete-after --delay-updates rsync://$FEDORA_MIRROR/linux/releases/$RELEASE_VERSION/Fedora/$BASE_ARCH/os/ $LOCAL_MIRROR/$FEDORA_IMAGES/
 if [ $? -ne 0 ]
 then
-	echo "FAILED TO UPDATE FEDORA MAIN" > $LOG
+        echo "Fedora Images FAILED" > $LOG
+fi
+
+#Fedora main repo
+rsync -PaH --exclude-from=$EXCLUDES_FILE --numeric-ids --delete --delete-after --delay-updates rsync://$FEDORA_MIRROR/linux/releases/$RELEASE_VERSION/Everything/$BASE_ARCH/os/ $LOCAL_MIRROR/$FEDORA_MAIN/
+if [ $? -ne 0 ]
+then
+	echo "Fedora Main FAILED" > $LOG
 fi
 
 #Fedora updates repo
-#rsync -aH --exclude-from=$excludes_file --numeric-ids --delete --delete-after --delay-updates rsync://$FEDORA_MIRROR/$FEDORA_UPDATES/ $LOCAL_MIRROR/$FEDORA_UPDATES/
+rsync -PaH --exclude-from=$EXCLUDES_FILE --numeric-ids --delete --delete-after --delay-updates rsync://$FEDORA_MIRROR/linux/updates/$RELEASE_VERSION/$BASE_ARCH/ $LOCAL_MIRROR/$FEDORA_UPDATES/
 if [ $? -ne 0 ]
 then
-	echo "FAILED TO UPDATE FEDORA MAIN" >> $LOG
+	echo "Fedora Updates FAILED" >> $LOG
 fi
 
 #RPMFusion free
-rsync -aH --exclude-from=$excludes_file --numeric-ids --delete --delete-after --delay-updates rsync://$RPMFUSION_MIRROR/$RPMFUSION_FREE/ $LOCAL_MIRROR/$RPMFUSION_FREE/
+rsync -PaH --exclude-from=$EXCLUDES_FILE --numeric-ids --delete --delete-after --delay-updates rsync://$RPMFUSION_MIRROR/$RPMFUSION_FREE/ $LOCAL_MIRROR/$RPMFUSION_FREE/
 if [ $? -ne 0 ]
 then
-	echo "FAILED TO UPDATE FEDORA MAIN" >> $LOG
+	echo "RPMFusion Free FAILED" >> $LOG
 fi
 
 #RPMFusion free updates
-rsync -aH --exclude-from=$excludes_file --numeric-ids --delete --delete-after --delay-updates rsync://$RPMFUSION_MIRROR/$RPMFUSION_FREE_UPDATES/ $LOCAL_MIRROR/$RPMFUSION_FREE_UPDATES/
+rsync -PaH --exclude-from=$EXCLUDES_FILE --numeric-ids --delete --delete-after --delay-updates rsync://$RPMFUSION_MIRROR/$RPMFUSION_FREE_UPDATES/ $LOCAL_MIRROR/$RPMFUSION_FREE_UPDATES/
 if [ $? -ne 0 ]
 then
-	echo "FAILED TO UPDATE FEDORA MAIN" >> $LOG
+	echo "RPMFusion Free Updates FAILED" >> $LOG
 fi
 
 #RPMFusion nonfree
-rsync -aH --exclude-from=$excludes_file --numeric-ids --delete --delete-after --delay-updates rsync://$RPMFUSION_MIRROR/$RPMFUSION_NONFREE/ $LOCAL_MIRROR/$RPMFUSION_NONFREE/
+rsync -PaH --exclude-from=$EXCLUDES_FILE --numeric-ids --delete --delete-after --delay-updates rsync://$RPMFUSION_MIRROR/$RPMFUSION_NONFREE/ $LOCAL_MIRROR/$RPMFUSION_NONFREE/
 if [ $? -ne 0 ]
 then
-	echo "FAILED TO UPDATE FEDORA MAIN" >> $LOG
+	echo "RPMFusion NonFree FAILED" >> $LOG
 fi
 
 #RPMFusion nonfree updates
-rsync -aH --exclude-from=$excludes_file --numeric-ids --delete --delete-after --delay-updates rsync://$RPMFUSION_MIRROR/$RPMFUSION_NONFREE_UPDATES/ $LOCAL_MIRROR/$RPMFUSION_NONFREE_UPDATES/
+rsync -PaH --exclude-from=$EXCLUDES_FILE --numeric-ids --delete --delete-after --delay-updates rsync://$RPMFUSION_MIRROR/$RPMFUSION_NONFREE_UPDATES/ $LOCAL_MIRROR/$RPMFUSION_NONFREE_UPDATES/
 if [ $? -ne 0 ]
 then
-	echo "FAILED TO UPDATE FEDORA MAIN" >> $LOG
+	echo "RPMFusion NonFree Updates FAILED" >> $LOG
 fi
 
-#Clean up excludes file
-rm $excludes_file
+#VirtualBox
+cd $LOCAL_MIRROR
+wget --mirror --level=1 --no-parent --continue http://download.virtualbox.org/virtualbox/rpm/fedora/$RELEASE_VERSION/$BASE_ARCH/
+if [ $? -ne 0 ]
+then
+	echo "Virtualbox Update FAILED" >> $LOG
+fi
+cd $OLDPWD	
+
+#Clean up
+rm $EXCLUDES_FILE
