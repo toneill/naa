@@ -1,14 +1,4 @@
 #!/usr/bin/env python
-#
-# Usage
-# To setup the required rules in iptables run: 
-#	network_monitor.py start|initate|initalise
-#
-# To clean or flush the required rules from iptables run: 
-#	network_monitor.py stop|flush|clear
-#
-# Then to run the report then:
-#	network_monitor.py [report]
 
 import sys
 import os
