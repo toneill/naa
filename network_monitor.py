@@ -28,12 +28,13 @@ LAST_RESULT = "netmon.last"
 RESULT_LOG = "netmon.log"
 
 # Email reporting variables
-EMAIL_TO = ['matthew.oliver@naa.gov.au']
+EMAIL_TO = ['matthew.oliver@naa.gov.au', 'michael.carden@naa.gov.au','christopher.smart@naa.gov.au']
 EMAIL_FROM = 'dpuser@naa.gov.au'
 EMAIL_SUBJECT = 'Network Usage Report - %s'
 EMAIL_ATTACHMENTS = []
 EMAIL_SERVER = 'localhost'
 EMAIL_MSG = """Network usage between: %s and %s
+
 Proxy Traffic:
   Usage: %s
   Current Total: %s
