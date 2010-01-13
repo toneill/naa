@@ -24,16 +24,17 @@ NOT_NETWORK_IDX = 2
 
 # Format of the folling files: date	proxy bytes	non-network bytes
 # NOTE: Seperated by tabs (\t)
-LAST_RESULT = "netmon.last"
-RESULT_LOG = "netmon.log"
+LAST_RESULT = "/home/dpadmin/matt/bin/netmon.last"
+RESULT_LOG = "/home/dpadmin/matt/bin/netmon.log"
 
 # Email reporting variables
-EMAIL_TO = ['matthew.oliver@naa.gov.au']
+EMAIL_TO = ['matthew.oliver@naa.gov.au', 'michael.carden@naa.gov.au','christopher.smart@naa.gov.au']
 EMAIL_FROM = 'dpuser@naa.gov.au'
 EMAIL_SUBJECT = 'Network Usage Report - %s'
 EMAIL_ATTACHMENTS = []
 EMAIL_SERVER = 'localhost'
 EMAIL_MSG = """Network usage between: %s and %s
+
 Proxy Traffic:
   Usage: %s
   Current Total: %s
@@ -126,10 +127,12 @@ def report():
 	# Now we need to get the byte totals from iptables.
 	new_totals = get_totals()
 	
+	reset_detected = False
 	proxy_usage = 0
 	not_network_usage = 0
 	if last[PROXY_IDX] > new_totals[PROXY_IDX]:
 		# Counters must have been reset.
+		reset_detected = True
 		proxy_usage = new_totals[PROXT_IDX]
 		not_network_usage = new_totals[NOT_NETWORK_IDX]
 	else:
@@ -152,14 +155,19 @@ def report():
 	last = make_human_readable(last)
 	new_totals = make_human_readable(new_totals)
 	result = make_human_readable(result)
-
-
+	
+	
 	print "Last Total - " + result_str % last
 	print "New Total - " + result_str % new_totals
 	print "New Usage - " + result_str % result
-
+	
+	if reset_detected:
+		msg = " == RESET DETECTED! == \n"
+	else:
+		msg = ""
+	
 	# Send the email report
-	msg = EMAIL_MSG % (last[TIMESTAMP_IDX],result[TIMESTAMP_IDX], result[PROXY_IDX], new_totals[PROXY_IDX], result[NOT_NETWORK_IDX], new_totals[NOT_NETWORK_IDX])
+	msg += EMAIL_MSG % (last[TIMESTAMP_IDX],result[TIMESTAMP_IDX], result[PROXY_IDX], new_totals[PROXY_IDX], result[NOT_NETWORK_IDX], new_totals[NOT_NETWORK_IDX])
 	send_email(EMAIL_FROM, EMAIL_TO, EMAIL_SUBJECT % (result[TIMESTAMP_IDX]), msg, EMAIL_ATTACHMENTS, EMAIL_SERVER)
 	
 
