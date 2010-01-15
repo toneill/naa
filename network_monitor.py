@@ -21,6 +21,7 @@ IPTABLES_REPORT_CMD = "iptables -L -n -x -v --line-numbers"
 TIMESTAMP_IDX = 0
 PROXY_IDX = 1
 NOT_NETWORK_IDX = 2
+TOTAL_START_IDX = 3
 
 # Format of the folling files: date	proxy bytes	non-network bytes
 # NOTE: Seperated by tabs (\t)
@@ -29,6 +30,7 @@ RESULT_LOG = "/home/dpadmin/matt/bin/netmon.log"
 
 # Email reporting variables
 EMAIL_TO = ['matthew.oliver@naa.gov.au', 'michael.carden@naa.gov.au','christopher.smart@naa.gov.au']
+#EMAIL_TO = ['matthew.oliver@naa.gov.au']
 EMAIL_FROM = 'dpuser@naa.gov.au'
 EMAIL_SUBJECT = 'Network Usage Report - %s'
 EMAIL_ATTACHMENTS = []
@@ -42,6 +44,8 @@ Proxy Traffic:
 Non Network Traffic:
   Usage: %s
   Current Total: %s
+
+Total since: %s
 """
 
 
@@ -97,11 +101,12 @@ def get_last():
 	if os.path.exists(LAST_RESULT):
 		lstFile = file(LAST_RESULT).readlines()
 		result = lstFile[0].strip().split()
-		result[1] = int(result[1])
-		result[2] = int(result[2])
+		result[PROXY_IDX] = int(result[PROXY_IDX])
+		result[NOT_NETWORK_IDX] = int(result[NOT_NETWORK_IDX])
 		return tuple(result)
 	else:
-		return (generate_timestamp(), 0, 0)
+		timestamp = generate_timestamp()
+		return (timestamp, 0, 0, timestamp)
 
 def _cleanup_iptables():
 	os.system("iptables -D %s" % (IPTABLES_PROXY_RULE % ("")))
@@ -118,7 +123,7 @@ def start():
 	os.system("iptables -I %s" % (IPTABLES_NOT_NETWORK_RULE % ("1")))
 
 def stop():
-	# Delete the rules 
+	# Delete the rules TOTAL_START_IDX
 	_cleanup_iptables()
 
 def report():
@@ -130,11 +135,13 @@ def report():
 	reset_detected = False
 	proxy_usage = 0
 	not_network_usage = 0
+	total_start = last[TOTAL_START_IDX]
 	if last[PROXY_IDX] > new_totals[PROXY_IDX]:
 		# Counters must have been reset.
 		reset_detected = True
 		proxy_usage = new_totals[PROXT_IDX]
 		not_network_usage = new_totals[NOT_NETWORK_IDX]
+		total_start = new_totals[TIMESTAMP_IDX]
 	else:
 		# Do the calc
 		proxy_usage = new_totals[PROXY_IDX] - last[PROXY_IDX]
@@ -145,7 +152,10 @@ def report():
 
 	# Write out the new last totals to the log and last.
 	last_file = file(LAST_RESULT, 'w')
-	last_file.write("%s\t%d\t%d\n" % new_totals)
+	tmp_list = []
+	tmp_list.extend(new_totals)
+	tmp_list.append(total_start)
+	last_file.write("%s\t%d\t%d\t%s\n" % tuple(tmp_list))
 	last_file.close()
 
 	log = file(RESULT_LOG, 'a')
@@ -167,7 +177,7 @@ def report():
 		msg = ""
 	
 	# Send the email report
-	msg += EMAIL_MSG % (last[TIMESTAMP_IDX],result[TIMESTAMP_IDX], result[PROXY_IDX], new_totals[PROXY_IDX], result[NOT_NETWORK_IDX], new_totals[NOT_NETWORK_IDX])
+	msg += EMAIL_MSG % (last[TIMESTAMP_IDX],result[TIMESTAMP_IDX], result[PROXY_IDX], new_totals[PROXY_IDX], result[NOT_NETWORK_IDX], new_totals[NOT_NETWORK_IDX], total_start)
 	send_email(EMAIL_FROM, EMAIL_TO, EMAIL_SUBJECT % (result[TIMESTAMP_IDX]), msg, EMAIL_ATTACHMENTS, EMAIL_SERVER)
 	
 
