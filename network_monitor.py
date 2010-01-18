@@ -53,11 +53,11 @@ def human_readable(bytes):
 	if bytes < 1024:
 		return str(bytes)
 	for x in 'K', 'M','G':
-		bytes /= 1024
+		bytes /= 1024.0
 		if bytes < 1024:
-			return "%d%s" % (bytes, x)
+			return "%.2f%s" % (bytes, x)
 	if bytes > 1024:
-		return "%d%s" % (bytes, 'G')
+		return "%.2f%s" % (bytes, 'G')
 
 def make_human_readable(results):
 	return (results[0], human_readable(results[1]), human_readable(results[2]))
