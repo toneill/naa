@@ -19,6 +19,7 @@
 #This script is for installing and configuring clam-server (clamd) on Fedora
 
 #Variables
+VERSION=0.1
 COUNTDOWN_TIMEOUT=5
 FEDORA_RELEASE="`cat /etc/fedora-release 2>/dev/null`"
 FRESHCLAM_CONF="/etc/freshclam.conf"
@@ -58,6 +59,7 @@ echo ""
 if [ "$1" == "help" -o "$1" == "-help" -o "$1" == "--help" -o "$1" == "-h" -o "$1" == "--h" ]
 then
 	echo "This script configures clamav-server (clamd) on Fedora."
+	echo "Version $VERSION"
 	echo ""
 	echo "Usage:"
 	echo " $0 [option] [username] [port]"
