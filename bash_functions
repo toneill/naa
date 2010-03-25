@@ -3,13 +3,13 @@
 #Put this somewhere and source it in ~/.bashrc
 
 #Global Variables
-HOME_URL="[fqdn]"
+HOME_URL="home.oliver.net.au"
 PROXY_PORT=3128
 
 #Java stuff for Arch Linux
 #export JAVA_HOME=/opt/java/jre
-#export PATH=$PATH:/opt/java/jre/bin:/opt/openoffice/program:/usr/share/eclipse
-#source /etc/bash_completion
+export PATH=$PATH:~matt/bin/:/sbin:/usr/sbin:/usr/share/eclipse:/opt/VirtualBox-2.1.4
+source /etc/bash_completion
 
 #Terminal stuff
 setterm -blength 0
@@ -19,12 +19,20 @@ parse_git_branch() {
   git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
 }
 
+parse_hg_branch() {
+  hgBranch=`hg branch 2> /dev/null`
+  if [ -n "$hgBranch" ]
+  then
+  	echo " ($hgBranch)"
+  fi
+}
+
 #Colour console
 if [ ${EUID} -eq 0 ]
 then
         export PS1="\[\033[01;31m\]\h \[\033[01;34m\]\W\[\033[01;32m\]\$(parse_git_branch) \[\033[01;34m\]\$\[\033[00m\] "
 else
-        export PS1="\[\033[01;32m\]\u\[\033[01;36m\]@\[\033[01;32m\]\h\[\033[01;34m\] \W\[\033[01;32m\]\$(parse_git_branch) \[\033[01;34m\]\$\[\033[00m\] "
+        export PS1="\[\033[01;32m\]\u\[\033[1;32m\]@\[\033[01;32m\]\h\[\033[01;34m\] \W\[\033[01;32m\]\$(parse_hg_branch)\$(parse_git_branch) \[\033[01;34m\]\$\[\033[00m\] "
 fi
 
 #Handy functions
@@ -41,7 +49,7 @@ sendhome() {
         echo "ERROR, You must pass a file"
     else
         src="$1"
-    scp $src $HOME_URL:$dpath   
+    rsync -a $src $HOME_URL:$dpath   
     fi
 }
 
@@ -51,6 +59,10 @@ home() {
 
 homeproxy() {
     ssh $HOME_URL -N -L $PROXY_PORT:localhost:$PROXY_PORT
+}
+
+anuproxy() {
+    ssh travis.anu.edu.au -N -L $PROXY_PORT:localhost:$PROXY_PORT
 }
 
 hometunnel() {
@@ -74,3 +86,26 @@ hometunnel() {
     echo "Running: ssh $HOME_URL -N -L $local_port:localhost:$home_port"
     ssh $HOME_URL -N -L $local_port:localhost:$home_port
 }
+
+dprshell() {
+	ssh -t matthewoliver,dpr@shell.sourceforge.net create
+}
+
+xenashell() {
+	ssh -t matthewoliver,xena@shell.sourceforge.net create
+}
+
+# ^p check for partial match in history
+bind -m vi-insert "\C-p":dynamic-complete-history
+
+# ^n cycle through the list of partial matches
+bind -m vi-insert "\C-n":menu-complete
+
+# ^l clear screen
+bind -m vi-insert "\C-l":clear-screen
+
+# ^a Goto beginning of line
+bind -m vi-insert "\C-a":beginning-of-line
+
+# ^a Goto end of line
+bind -m vi-insert "\C-e":end-of-line
