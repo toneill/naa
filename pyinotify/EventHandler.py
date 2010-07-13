@@ -22,7 +22,12 @@ class EventHandler(pyinotify.ProcessEvent):
 		self.write_msg("FILE MOVED FROM", event.pathname) 
 
 	def process_IN_MOVED_TO(self, event):
-		self.write_msg("FILE MOVED INTO", event.pathname) 
+		try: 
+			msg = event.src_pathname + " -> " + event.pathname
+		except:
+			msg = event.pathname
+
+		self.write_msg("FILE MOVED INTO", msg) 
 	
 	def openlog(self, logfile):
 		self.log = logfile
