@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-# Script to be run via cron to perform a nightly backup of the DPR CVS repository.
+# Script to be run via cron to perform a nightly backup of the DPR repository.
 # Uses rsync for the backup and sends email to the admin on completion.
 #
 MAIL_TO="michael.carden@naa.gov.au matthew.oliver@naa.gov.au christopher.smart@naa.gov.au alan.langley@naa.gov.au"
@@ -15,7 +15,7 @@ i=0
 finish=0
 while [ $finish -eq 0 ]
 do
-	rsync -av rsync://dpr.cvs.sourceforge.net/cvsroot/dpr/ . >> $tmp
+	rsync -av rsync://dpr.git.sourceforge.net/gitroot/dpr/dpr/ . >> $tmp
 	if [ $? -ne 0 ]
 	then
 		#FAILED
