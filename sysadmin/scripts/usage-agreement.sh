@@ -18,11 +18,14 @@
 
 ## This script uses kdialog to prompt the user to agree to terms of usage when loggin in.
 ## Naturally, you need to install kdialog and use KDM, not GDM as the login manager.
-## The desktop itself doesn't matter, this works with KDE, GNOME, Xfce, etc.
+## (The desktop itself doesn't matter, this works with KDE, GNOME, Xfce, etc.)
 
 ## Put this file in /usr/local/bin/ and call it from the KDM Xsession file.
 ## Under Fedora, this at /etc/kde/kdm/Xsession - simply add it as the first thing to call in the file.
 ## Now when users log in, they need to agree, or get kicked out!
+
+## This might extend to SSH and terminal logins, hence the checking for DISPLAY, etc, but it's not done yet.
+
 
 if [ -n "`env |grep DISPLAY`" ]
 then
