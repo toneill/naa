@@ -26,16 +26,33 @@
 
 ## This might extend to SSH and terminal logins, hence the checking for DISPLAY, etc, but it's not done yet.
 
+TITLE="Usage Agreement"
+MESSAGE="Do you declare that; DigiPres is awesome?"
 
 if [ -n "`env |grep DISPLAY`" ]
 then
-	kdialog --yesno "Do you declare that; DigiPres is awesome?"
+	if [ -f "`which kdialog 2>/dev/null`" ]
+	then
+		kdialog --title "$TITLE" --yesno "$MESSAGE"
+	elif [ -f "`which zenity 2>/dev/null`" ]
+	then
+		zenity --title "$TITLE" --question --text "$MESSAGE"
+	elif [ -f "`which Xdialog 2>/dev/null`" ]
+	then
+		Xdialog --title "$TITLE" --yesno "$MESSAGE" 10 60
+	else
+		echo "`date`" >> ~/LOGIN-ERROR.txt
+		echo "Could not log in becasue no suitable dialog program found." >> LOGIN-ERROR.txt
+		echo "" >> ~/LOGIN-ERROR.txt
+		kill -HUP $PPID
+	fi
+
 	if [ $? -ne 0 ]
 	then
 		kill -HUP $PPID
 	fi
 else
-	echo "Do you declare that; DigiPres is awesome? (y/N): "
+	echo "$MESSAGE (y/N): "
 	read answer
 	if [ "$answer" != "y" -a "$answer" != "Y" ]
 	then
