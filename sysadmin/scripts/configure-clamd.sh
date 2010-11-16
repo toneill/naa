@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Copyright 2009 "Christopher Smart" <mail@christophersmart.com>
+# Copyright 2009-2010 "Christopher Smart" <mail@christophersmart.com>
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
+# it under the temms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
@@ -19,10 +19,9 @@
 #This script is for installing and configuring clam-server (clamd) on Fedora
 
 #Variables
-VERSION=0.1
+VERSION=0.3
 COUNTDOWN_TIMEOUT=5
 FEDORA_RELEASE="`cat /etc/fedora-release 2>/dev/null`"
-FRESHCLAM_CONF="/etc/freshclam.conf"
 
 #These variables are set later, once we know the user
 CLAMD_USER=""
@@ -32,6 +31,23 @@ CLAMD_INIT=""
 CLAMD_LOGROTATE=""
 CLAMD_PID=""
 CLAMD_LOG=""
+CLAMD_DATABASE=""
+FRESHCLAM_LOG=""
+FRESHCLAM_CONF=""
+FRESHCLAM_USER_CONF=""
+
+#Proxy variables
+PROXY=`env |grep http_proxy |awk -F "http://" {'print $2'}`
+if [ -n "echo $PROXY |grep @" ]
+then
+	PROXY_HOST=`echo $PROXY |awk -F "@" {'print $2'} |awk -F ":" {'print $1'}`
+	PROXY_PORT=`echo $PROXY |awk -F "@" {'print $2'} |awk -F ":" {'print $2'}`
+	PROXY_USER=`echo $PROXY |awk -F "@" {'print $1'} |awk -F ":" {'print $1'}`
+	PROXY_PASS=`echo $PROXY |awk -F "@" {'print $1'} |awk -F ":" {'print $2'}`
+else
+	PROXY_HOST=`echo $PROXY |awk -F ":" {'print $1'}`
+	PROXY_PORT=`echo $PROXY |awk -F ":" {'print $2'}`
+fi
 
 #These variables are set later, once we know clamav-server version
 CLAMD_VERSION=""
@@ -135,6 +151,10 @@ CLAMD_PID="/var/run/clamd.$CLAMD_USER"
 CLAMD_LOG="/var/log/clamd.$CLAMD_USER"
 CLAMD_SYSCONFIG="/etc/sysconfig/clamd.$CLAMD_USER"
 CLAMD_CHKCONFIG="/sbin/chkconfig clamd.$CLAMD_USER"
+CLAMD_DATABASE="/var/lib/clamav/$CLAMD_USER"
+FRESHCLAM_CONF="/etc/freshclam.conf"
+FRESHCLAM_USER_CONF="/etc/freshclam-$CLAMD_USER.conf"
+FRESHCLAM_LOG="/var/log/freshclam-$CLAMD_USER.log"
 
 #Removing existing instance of clamd for specified user, if told to do so
 if [ "$1" == "-r" ]
@@ -176,7 +196,11 @@ then
 	rm -rf $CLAMD_PID 2>/dev/null
 	rm -f $CLAMD_LOG 2>/dev/null
 	rm -f $CLAMD_SYSCONFIG 2>/dev/null
+	rm -f $FRESHCLAM_USER_CONF 2>/dev/null
+	rm -rf $CLAMD_DATABASE 2>/dev/null
 	unlink /usr/sbin/clamd.$CLAMD_USER 2>/dev/null
+	#unset freshclam alias
+	sed -i 's/^alias\ freshclam=.*//' `cat /etc/passwd |grep $CLAMD_USER |awk -F ":" {'print $6'}`/.bashrc
 	
 	#Remove user?
 	if [ -n "`id $CLAMD_USER 2>/dev/null`" ]
@@ -189,6 +213,7 @@ then
 		then
 			#Remove user and confirm success
 			echo "OK, removing user '$CLAMD_USER' from the system."
+			groupdel $CLAMD_USER 2>/dev/null
 			userdel -r $CLAMD_USER 2>/dev/null
 			if [ $? -eq 0 -o $? -eq 12 ]
 			then
@@ -206,6 +231,21 @@ then
 		echo "User does not exist in the system, not removing."
 		echo ""
 	fi
+
+	#Remove packages?
+	if [ -n "`rpm -qa |grep clamav`" -a "`rpm -qa |grep clamav-update`" -a "`rpm -qa |grep clamav-server`" ]
+	then
+		#Ask if we want to remove packages too.
+		echo -e "Do you want to uninstall the ClamAV packages from the system? (y/N): \c "
+		read answer
+		echo ""
+		if [ "$answer" == "y" -o "$answer" == "Y" ]
+		then
+			yum -y erase clamav clamav-server clamav-update
+		fi
+	fi
+
+	#Exit
 	echo "Instance of clamd for user '$CLAMD_USER' has been successfully removed."
 	echo ""
 	exit 0
@@ -264,6 +304,7 @@ echo "Checking for clamav user, '$CLAMD_USER'.."
 if [ -z "`id $CLAMD_USER 2>/dev/null`" ]
 then
 	useradd $CLAMD_USER -r -c "User for clamd" -d /dev/null -M -s /sbin/nologin 2>/dev/null
+	groupadd $CLAMD_USER 2>/dev/null
 	if [ $? -ne 0 ]
 	then
 		echo "Unable to create new clamd user, '$CLAMD_USER', sorry."
@@ -331,8 +372,8 @@ sed -i 's/^LocalSocket/#LocalSocket/' $CLAMD_CONFIG
 sed -i 's/^#TCPSocket\ 3310/TCPSocket\ '$CLAMD_PORT'/' $CLAMD_CONFIG
 sed -i 's/^#TCPAddr/TCPAddr/' $CLAMD_CONFIG
 sed -i 's/<USER>/'$CLAMD_USER'/' $CLAMD_CONFIG
-echo "Done."
-echo ""
+sed -i 's/^#DatabaseDirectory.*/DatabaseDirectory\ \/var\/lib\/clamav\/'$CLAMD_USER'/' $CLAMD_CONFIG
+chown $CLAMD_USER:$CLAMD_USER $CLAMD_CONFIG
 
 #Copy and configure clamd for log rotation
 if [ -d /etc/logrotate.d ]
@@ -344,8 +385,6 @@ then
 	cp -f $CLAMD_LOGROTATE_TEMPLATE $CLAMD_LOGROTATE
 	sed -i 's/clamd.<SERVICE>/clamd.'$CLAMD_USER'/' $CLAMD_LOGROTATE
 fi
-echo "Done."
-echo ""
 
 #Configuring clamd under sysconfig
 echo "Configuring clamd under syconfig.."
@@ -356,9 +395,7 @@ rm -f $CLAMD_SYSCONFIG 2>/dev/null
 #Copy over the template file
 cp -f $CLAMD_SYSCONFIG_TEMPLATE $CLAMD_SYSCONFIG 2>/dev/null
 sed -i 's/<SERVICE>/'$CLAMD_USER'/' $CLAMD_SYSCONFIG
-sed -i 's/^#CLAMD/'CLAMD'/' $CLAMD_SYSCONFIG
-echo "Done."
-echo ""
+sed -i 's/^#CLAMD/CLAMD/' $CLAMD_SYSCONFIG
 
 #Configuring clamd init script
 echo "Configuring clamd init script.."
@@ -379,27 +416,73 @@ then
 	echo ""
 	exit 1
 fi
-echo "Done."
-echo ""
+
+sed -i 's/^#CLAMD/'CLAMD'/' $CLAMD_SYSCONFIG
 
 #Configure freshclam
-echo "Enabling freshclam, the clamav updater.."
-sed -i 's/^Example/#Example/' $FRESHCLAM_CONF
+echo "Configuring freshclam, the clamav updater.."
+cp -a $FRESHCLAM_CONF $FRESHCLAM_USER_CONF
+chown $CLAMD_USER:$CLAMD_USER $FRESHCLAM_USER_CONF
+sed -i 's/^Example/#Example/' $FRESHCLAM_USER_CONF
+sed -i 's/^#DatabaseDirectory.*/DatabaseDirectory\ \/var\/lib\/clamav\/'$CLAMD_USER'/' $FRESHCLAM_USER_CONF
+sed -i 's/^#UpdateLogFile.*/UpdateLogFile\ \/var\/log\/freshclam-'$CLAMD_USER'.log/' $FRESHCLAM_USER_CONF
+#Set alias so that freshclam points to correct config file
+echo "alias freshclam='freshclam --config-file=$FRESHCLAM_USER_CONF'" >> `cat /etc/passwd |grep $CLAMD_USER |awk -F ":" {'print $6'}`/.bashrc
 
-#Should we set the proxy too, if in env?
-echo "Done."
-echo ""
+#Set proxy for updating clamav, if set in env?
+if [ -n "$PROXY_HOST" ]
+then
+	sed -i 's/^#HTTPProxyServer.*/HTTPProxyServer\ '$PROXY_HOST'/' $FRESHCLAM_USER_CONF
+fi
 
-echo "Creating required directories and starting service.."
+if [ -n "$PROXY_PORT" ]
+then
+	sed -i 's/^#HTTPProxyPort.*/HTTPProxyPort\ '$PROXY_PORT'/' $FRESHCLAM_USER_CONF
+fi
+
+if [ -n "$PROXY_USER" ]
+then
+	sed -i 's/^#HTTPProxyUsername.*/HTTPProxyUsername\ '$PROXY_USER'/' $FRESHCLAM_USER_CONF
+fi
+
+if [ -n "$PROXY_PASS" ]
+then
+	sed -i 's/^#HTTPProxyPassword.*/HTTPProxyPassword\ '$PROXY_PASS'/' $FRESHCLAM_USER_CONF
+fi
+
+
+echo "Configuring required directories.."
+#Set up clamav database directory
+mkdir -p $CLAMD_DATABASE 2>/dev/null
+chown $CLAMD_USER:$CLAMD_USER $CLAMD_DATABASE
+
 #Setup logs
 touch $CLAMD_LOG
 chown $CLAMD_USER:$CLAMD_USER $CLAMD_LOG
 chmod 0620 $CLAMD_LOG
 
+touch $FRESHCLAM_LOG
+chown $CLAMD_USER:$CLAMD_USER $FRESHCLAM_LOG
+chmod 0620 $FRESHCLAM_LOG
+
 #Setup run socket
 mkdir $CLAMD_PID 2>/dev/null
 chown $CLAMD_USER:$CLAMD_USER $CLAMD_PID/
 
+
+#Configure freshclam
+echo "Downloading virus definitions.."
+read
+su $CLAMD_USER -c "freshclam --config-file=$FRESHCLAM_USER_CONF"
+if [ $? -ne 0 ]
+then
+	echo ""
+	echo "WARNING: Could not download definitions, service will fail to start."
+	echo "Continuing."
+	echo ""
+fi
+
+echo "Creating required directories and starting service.."
 #Start services
 /etc/init.d/clamd.$CLAMD_USER start &>/dev/null
 if [ $? -ne 0 ]
@@ -408,8 +491,6 @@ then
 	echo "Continuing."
 	echo ""
 fi
-echo "Done."
-echo ""
 
 #Print summary
 echo "The clamd service has been successfully installed and configured with:"
