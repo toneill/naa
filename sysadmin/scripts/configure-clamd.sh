@@ -289,7 +289,7 @@ else
 fi
 
 #Get version of clamd, now that it's installed
-CLAMD_VERSION="`rpm -qa |grep clamav-server |awk -F "-" {'print $3'} 2>/dev/null`"
+CLAMD_VERSION="`rpm -qa |grep clamav-server |awk -F "-" {'print $3'} |grep -v "sysvinit" 2>/dev/null`"
 
 #Variables for template files now that we know the version of clamav-server installed
 CLAMD_CONFIG_TEMPLATE="/usr/share/doc/clamav-server-$CLAMD_VERSION/clamd.conf"
@@ -427,7 +427,7 @@ sed -i 's/^Example/#Example/' $FRESHCLAM_USER_CONF
 sed -i 's/^#DatabaseDirectory.*/DatabaseDirectory\ \/var\/lib\/clamav\/'$CLAMD_USER'/' $FRESHCLAM_USER_CONF
 sed -i 's/^#UpdateLogFile.*/UpdateLogFile\ \/var\/log\/freshclam-'$CLAMD_USER'.log/' $FRESHCLAM_USER_CONF
 #Set alias so that freshclam points to correct config file
-echo "alias freshclam='freshclam --config-file=$FRESHCLAM_USER_CONF'" >> `cat /etc/passwd |grep $CLAMD_USER |awk -F ":" {'print $6'}`/.bashrc
+echo "alias freshclam='freshclam --config-file=$FRESHCLAM_USER_CONF'" >> `cat /etc/passwd |grep ^$CLAMD_USER: |awk -F ":" {'print $6'}`/.bashrc
 
 #Set proxy for updating clamav, if set in env?
 if [ -n "$PROXY_HOST" ]
@@ -472,7 +472,6 @@ chown $CLAMD_USER:$CLAMD_USER $CLAMD_PID/
 
 #Configure freshclam
 echo "Downloading virus definitions.."
-read
 su $CLAMD_USER -c "freshclam --config-file=$FRESHCLAM_USER_CONF"
 if [ $? -ne 0 ]
 then
