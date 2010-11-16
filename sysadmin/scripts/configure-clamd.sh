@@ -36,19 +36,6 @@ FRESHCLAM_LOG=""
 FRESHCLAM_CONF=""
 FRESHCLAM_USER_CONF=""
 
-#Proxy variables
-PROXY=`env |grep http_proxy |awk -F "http://" {'print $2'}`
-if [ -n "echo $PROXY |grep @" ]
-then
-	PROXY_HOST=`echo $PROXY |awk -F "@" {'print $2'} |awk -F ":" {'print $1'}`
-	PROXY_PORT=`echo $PROXY |awk -F "@" {'print $2'} |awk -F ":" {'print $2'}`
-	PROXY_USER=`echo $PROXY |awk -F "@" {'print $1'} |awk -F ":" {'print $1'}`
-	PROXY_PASS=`echo $PROXY |awk -F "@" {'print $1'} |awk -F ":" {'print $2'}`
-else
-	PROXY_HOST=`echo $PROXY |awk -F ":" {'print $1'}`
-	PROXY_PORT=`echo $PROXY |awk -F ":" {'print $2'}`
-fi
-
 #These variables are set later, once we know clamav-server version
 CLAMD_VERSION=""
 CLAMD_CONFIG_TEMPLATE=""
@@ -156,6 +143,27 @@ FRESHCLAM_CONF="/etc/freshclam.conf"
 FRESHCLAM_USER_CONF="/etc/freshclam-$CLAMD_USER.conf"
 FRESHCLAM_LOG="/var/log/freshclam-$CLAMD_USER.log"
 
+#Proxy variables
+PROXY_CHECK=`su - $CLAMD_USER -c 'echo $http_proxy'`
+
+if [ -n "`echo $PROXY_CHECK |grep http://`" ]
+then
+	PROXY=`echo $PROXY_CHECK |awk -F "http://" {'print $2'}`
+else
+	PROXY=$PROXY_CHECK
+fi
+
+if [ -n "`echo $PROXY |grep @`" ]
+then
+	PROXY_HOST=`echo $PROXY |awk -F "@" {'print $2'} |awk -F ":" {'print $1'}`
+	PROXY_PORT=`echo $PROXY |awk -F "@" {'print $2'} |awk -F ":" {'print $2'}`
+	PROXY_USER=`echo $PROXY |awk -F "@" {'print $1'} |awk -F ":" {'print $1'}`
+	PROXY_PASS=`echo $PROXY |awk -F "@" {'print $1'} |awk -F ":" {'print $2'}`
+else
+	PROXY_HOST=`echo $PROXY |awk -F ":" {'print $1'}`
+	PROXY_PORT=`echo $PROXY |awk -F ":" {'print $2'}`
+fi
+
 #Removing existing instance of clamd for specified user, if told to do so
 if [ "$1" == "-r" ]
 then
@@ -200,13 +208,13 @@ then
 	rm -rf $CLAMD_DATABASE 2>/dev/null
 	unlink /usr/sbin/clamd.$CLAMD_USER 2>/dev/null
 	#unset freshclam alias
-	sed -i 's/^alias\ freshclam=.*//' `cat /etc/passwd |grep $CLAMD_USER |awk -F ":" {'print $6'}`/.bashrc
+	sed -i 's/^alias\ freshclam=.*//' `cat /etc/passwd |grep ^$CLAMD_USER: |awk -F ":" {'print $6'}`/.bashrc
 	
 	#Remove user?
 	if [ -n "`id $CLAMD_USER 2>/dev/null`" ]
 	then
 		#User exists, so ask if it should be removed
-		echo -e "**WARNING** DO YOU WANT TO REMOVE THE USER FROM THE SYSTEM? (y/N): \c "
+		echo -e "**WARNING** Do you want to REMOVE THE USER from the system? (y/N): \c "
 		read answer
 		echo ""
 		if [ "$answer" == "y" -o "$answer" == "Y" ]
@@ -233,7 +241,7 @@ then
 	fi
 
 	#Remove packages?
-	if [ -n "`rpm -qa |grep clamav`" -a "`rpm -qa |grep clamav-update`" -a "`rpm -qa |grep clamav-server`" ]
+	`if [ -n "`rpm -qa |grep clamav`" -a "`rpm -qa |grep clamav-update`" -a "`rpm -qa |grep clamav-server`" ]
 	then
 		#Ask if we want to remove packages too.
 		echo -e "Do you want to uninstall the ClamAV packages from the system? (y/N): \c "
@@ -494,6 +502,8 @@ fi
 #Print summary
 echo "The clamd service has been successfully installed and configured with:"
 echo "User '$CLAMD_USER' on port '$CLAMD_PORT'."
+echo ""
+echo "To update ClamAV definitions, run the 'freshclam' command as your user."
 echo ""
 echo 'Have fun!'
 echo ""
