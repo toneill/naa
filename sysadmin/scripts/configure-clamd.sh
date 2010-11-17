@@ -241,7 +241,7 @@ then
 	fi
 
 	#Remove packages?
-	`if [ -n "`rpm -qa |grep clamav`" -a "`rpm -qa |grep clamav-update`" -a "`rpm -qa |grep clamav-server`" ]
+	if [ -n "`rpm -qa |grep clamav`" -a "`rpm -qa |grep clamav-update`" -a "`rpm -qa |grep clamav-server`" ]
 	then
 		#Ask if we want to remove packages too.
 		echo -e "Do you want to uninstall the ClamAV packages from the system? (y/N): \c "
