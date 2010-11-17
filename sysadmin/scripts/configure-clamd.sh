@@ -188,8 +188,9 @@ then
 	then
 		echo "Could not stop service, sorry."
 		echo ""
+		echo "====================================================="
 		echo "Instance of clamd for user '$CLAMD_USER' NOT removed."
-		echo "Exiting."
+		echo "====================================================="
 		echo ""
 		exit 1
 	fi
@@ -254,6 +255,7 @@ then
 	fi
 
 	#Exit
+	echo ""
 	echo "Instance of clamd for user '$CLAMD_USER' has been successfully removed."
 	echo ""
 	exit 0
@@ -278,7 +280,7 @@ else
 	#Install required packages
 	echo "Installing required clamav packages.."
 	echo ""
-	yum -yq install clamav clamav-server clamav-update
+	yum -y install clamav clamav-server clamav-update
 	echo ""
 
 	#Check that the install was successful (or already installed)
@@ -480,30 +482,33 @@ chown $CLAMD_USER:$CLAMD_USER $CLAMD_PID/
 
 #Configure freshclam
 echo "Downloading virus definitions.."
+echo ""
 su $CLAMD_USER -c "freshclam --config-file=$FRESHCLAM_USER_CONF"
 if [ $? -ne 0 ]
 then
 	echo ""
-	echo "WARNING: Could not download definitions, service will fail to start."
-	echo "Continuing."
+	echo "WARNING: Could not download definitions, service will fail to start. Continuing."
 	echo ""
 fi
 
+echo ""
 echo "Creating required directories and starting service.."
 #Start services
 /etc/init.d/clamd.$CLAMD_USER start &>/dev/null
 if [ $? -ne 0 ]
 then
-	echo "Could not start service, sorry."
-	echo "Continuing."
+	echo "Could not start service, sorry. Continuing."
 	echo ""
 fi
 
 #Print summary
+echo ""
+echo "======================================================================="
 echo "The clamd service has been successfully installed and configured with:"
 echo "User '$CLAMD_USER' on port '$CLAMD_PORT'."
 echo ""
-echo "To update ClamAV definitions, run the 'freshclam' command as your user."
+echo "To update ClamAV definitions, run the 'freshclam' command as user $CLAMD_USER."
+echo "======================================================================="
 echo ""
 echo 'Have fun!'
 echo ""
