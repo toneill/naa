@@ -19,7 +19,7 @@
 #This script is for installing and configuring clam-server (clamd) on Fedora
 
 #Variables
-VERSION=0.3
+VERSION=0.4
 COUNTDOWN_TIMEOUT=5
 FEDORA_RELEASE="`cat /etc/fedora-release 2>/dev/null`"
 
@@ -112,9 +112,13 @@ fi
 #Set clamd user and port
 if [ "$1" != "-c" -a "$1" != "-r" ]
 then
+	echo "nothing passed"
+	read
 	CLAMD_USER="clamav"
 	CLAMD_PORT="3310"
 else
+	echo "something passed"
+	read
 	if [ -z "$2" ]
 	then
 		CLAMD_USER="clamav"
@@ -130,6 +134,9 @@ else
 	fi
 fi
 
+echo "got out of users ok"
+read
+
 #Variables for config files, now that we know the user
 CLAMD_CONFIG="/etc/clamd.d/$CLAMD_USER.conf"
 CLAMD_INIT="/etc/init.d/clamd.$CLAMD_USER"
@@ -142,27 +149,6 @@ CLAMD_DATABASE="/var/lib/clamav/$CLAMD_USER"
 FRESHCLAM_CONF="/etc/freshclam.conf"
 FRESHCLAM_USER_CONF="/etc/freshclam-$CLAMD_USER.conf"
 FRESHCLAM_LOG="/var/log/freshclam-$CLAMD_USER.log"
-
-#Proxy variables
-PROXY_CHECK=`su - $CLAMD_USER -c 'echo $http_proxy'`
-
-if [ -n "`echo $PROXY_CHECK |grep http://`" ]
-then
-	PROXY=`echo $PROXY_CHECK |awk -F "http://" {'print $2'}`
-else
-	PROXY=$PROXY_CHECK
-fi
-
-if [ -n "`echo $PROXY |grep @`" ]
-then
-	PROXY_HOST=`echo $PROXY |awk -F "@" {'print $2'} |awk -F ":" {'print $1'}`
-	PROXY_PORT=`echo $PROXY |awk -F "@" {'print $2'} |awk -F ":" {'print $2'}`
-	PROXY_USER=`echo $PROXY |awk -F "@" {'print $1'} |awk -F ":" {'print $1'}`
-	PROXY_PASS=`echo $PROXY |awk -F "@" {'print $1'} |awk -F ":" {'print $2'}`
-else
-	PROXY_HOST=`echo $PROXY |awk -F ":" {'print $1'}`
-	PROXY_PORT=`echo $PROXY |awk -F ":" {'print $2'}`
-fi
 
 #Removing existing instance of clamd for specified user, if told to do so
 if [ "$1" == "-r" ]
@@ -313,7 +299,9 @@ echo "Checking for clamav user, '$CLAMD_USER'.."
 
 if [ -z "`id $CLAMD_USER 2>/dev/null`" ]
 then
-	useradd $CLAMD_USER -r -c "User for clamd" -d /dev/null -M -s /sbin/nologin 2>/dev/null
+	#original - we didn't create home dirs, but this is needed if we're checking for and setting up a proxy (and executing freshclam)
+	#useradd $CLAMD_USER -r -c "User for clamd" -d /dev/null -M -s /sbin/nologin 2>/dev/null
+	useradd $CLAMD_USER -r -c "User for clamd" 2>/dev/null
 	groupadd $CLAMD_USER 2>/dev/null
 	if [ $? -ne 0 ]
 	then
@@ -331,6 +319,28 @@ else
 	echo "User already exists, not creating."
 	echo ""
 fi
+
+#Set any proxy variables now that we know the user exists
+PROXY_CHECK=`su - $CLAMD_USER -c 'echo $http_proxy' 2>/dev/null`
+
+if [ -n "`echo $PROXY_CHECK |grep http://`" ]
+then
+	PROXY=`echo $PROXY_CHECK |awk -F "http://" {'print $2'}`
+else
+	PROXY=$PROXY_CHECK
+fi
+
+if [ -n "`echo $PROXY |grep @`" ]
+then
+	PROXY_HOST=`echo $PROXY |awk -F "@" {'print $2'} |awk -F ":" {'print $1'}`
+	PROXY_PORT=`echo $PROXY |awk -F "@" {'print $2'} |awk -F ":" {'print $2'}`
+	PROXY_USER=`echo $PROXY |awk -F "@" {'print $1'} |awk -F ":" {'print $1'}`
+	PROXY_PASS=`echo $PROXY |awk -F "@" {'print $1'} |awk -F ":" {'print $2'}`
+else
+	PROXY_HOST=`echo $PROXY |awk -F ":" {'print $1'}`
+	PROXY_PORT=`echo $PROXY |awk -F ":" {'print $2'}`
+fi
+
 
 #Copy and configure clamd configuration file
 echo "Configuring clamd to do all the right things.."
