@@ -112,13 +112,9 @@ fi
 #Set clamd user and port
 if [ "$1" != "-c" -a "$1" != "-r" ]
 then
-	echo "nothing passed"
-	read
 	CLAMD_USER="clamav"
 	CLAMD_PORT="3310"
 else
-	echo "something passed"
-	read
 	if [ -z "$2" ]
 	then
 		CLAMD_USER="clamav"
@@ -133,9 +129,6 @@ else
 		CLAMD_PORT="$3"
 	fi
 fi
-
-echo "got out of users ok"
-read
 
 #Variables for config files, now that we know the user
 CLAMD_CONFIG="/etc/clamd.d/$CLAMD_USER.conf"
@@ -201,15 +194,15 @@ then
 	if [ -n "`id $CLAMD_USER 2>/dev/null`" ]
 	then
 		#User exists, so ask if it should be removed
-		echo -e "**WARNING** Do you want to REMOVE THE USER from the system? (y/N): \c "
+		echo -e "**WARNING** Do you want to REMOVE THE USER from the system? (y/N): "
+		echo -e "**NOTE** This will also delete the user's home directory. \c "
 		read answer
 		echo ""
 		if [ "$answer" == "y" -o "$answer" == "Y" ]
 		then
 			#Remove user and confirm success
 			echo "OK, removing user '$CLAMD_USER' from the system."
-			groupdel $CLAMD_USER 2>/dev/null
-			userdel -r $CLAMD_USER 2>/dev/null
+			userdel -rf $CLAMD_USER 2>/dev/null
 			if [ $? -eq 0 -o $? -eq 12 ]
 			then
 				echo "User removed successfully."
@@ -242,7 +235,9 @@ then
 
 	#Exit
 	echo ""
+	echo "======================================================================="
 	echo "Instance of clamd for user '$CLAMD_USER' has been successfully removed."
+	echo "======================================================================="
 	echo ""
 	exit 0
 fi
@@ -301,8 +296,7 @@ if [ -z "`id $CLAMD_USER 2>/dev/null`" ]
 then
 	#original - we didn't create home dirs, but this is needed if we're checking for and setting up a proxy (and executing freshclam)
 	#useradd $CLAMD_USER -r -c "User for clamd" -d /dev/null -M -s /sbin/nologin 2>/dev/null
-	useradd $CLAMD_USER -r -c "User for clamd" 2>/dev/null
-	groupadd $CLAMD_USER 2>/dev/null
+	useradd $CLAMD_USER -c "User for clamd" 2>/dev/null
 	if [ $? -ne 0 ]
 	then
 		echo "Unable to create new clamd user, '$CLAMD_USER', sorry."
