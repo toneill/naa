@@ -42,10 +42,47 @@ repo --name="Yum Rawhide"  --baseurl=http://test:password@10.0.0.29/yum-rawhide/
 @core
 @british-support
 @gnome-desktop
+@office
 @online-docs
 @base-x
 gvfs-obexftp
 gdm
+
+#Development tools for out of tree modules
+gcc
+kernel-devel
+dkms
+time
+
+#Extra packages
+bash-completion
+clamav-scanner
+clamav-update
+firefox
+gimp
+git
+htop
+inkscape
+java-1.6.0-openjdk
+unrar
+vim
+vlc
+
+#Multimedia (KDE will use Xine by default, but also suport Gstreamer)
+flac
+gstreamer-ffmpeg
+gstreamer-plugins-bad
+gstreamer-plugins-bad-free
+gstreamer-plugins-bad-free-extras
+gstreamer-plugins-bad-nonfree
+gstreamer-plugins-good
+gstreamer-plugins-ugly
+PackageKit-gstreamer-plugin
+xine-lib-extras
+xine-lib-extras-freeworld
+
+#Out of kernel GPL drivers
+akmod-VirtualBox-OSE
 
 #Rebranding requirements
 -fedora-logos
@@ -60,14 +97,32 @@ generic-release-notes
 #Set Kororaa branding
 sed -i 's/^Generic.*/DPSP\ Remix\ 14/g' /etc/fedora-release /etc/issue
 
+#Configure repositories
 #copy repo file for Google Chrome into /etc/yum.repos.d/
 #copy repo file for VirtualBox into /etc/yum.repos.d/
 #copy repo file for Yum Rawhide into /etc/yum.repos.d/
 
-#Need to set "exclude=AdobeReader*" in adobe repo
-#Need to set "includepkgs=libdvdcss*" in atrpms repo (if we use it instead of livna, which is often unreliable)
-#Need to set "clean_requirements_on_remove = 1" in /etc/yum.conf
-#Copy Firefox addons to /usr/lib64/firefox-3.6/defaults/profile/extensions/
+#Don't allow Adobe to install reader (auto pulled in by flash).. yuck.
+echo "exclude=AdobeReader*" >> /etc/yum.repos.d/adobe-linux-i386.repo
 
+#Set yum to autoclean orphans on package removal and to only keep one old kernel around
+sed -i '/^\[main\]$/a clean_requirements_on_remove=1' /etc/yum.conf
+sed -i 's/^installonly_limit=.*/installonly_limit=2/g' /etc/yum.conf
+
+#Build out of kernel modules (so it's not done on first boot)
+akmods --force
+
+#Configure DPR stuff (need to know what network we are on, so we can set the appropriate server)
+DPSP_NETWORK=$(ifconfig |grep -A1 eth0 |grep "inet addr" |awk {'print $2'} |awk -F "." {'print $3'})
+DPSP_SERVER="server"
+if [ "$DPSP_NETWORK" -eq "40" ]
+then
+	DPSP_SERVER="marlin"
+elif [ "$DPSP_NETWORK" -eq "41" ]
+then
+	DPSP_SERVER="coral"
+fi
+echo $DPSP_NETWORK
+echo $DPSP_SERVER
 
 %end
