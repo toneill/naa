@@ -16,14 +16,15 @@ firewall --service=ssh
 # here so unless you clear all partitions first, this is
 # not guaranteed to work
 clearpart --all --drives=sda
-part /boot --fstype=ext4 --asprimary --size=512
-part pv.8qJs0X-cWnA-2T83-R6VJ-Jwc5-7XDB-xth2Gg --grow --asprimary --size=512
 
-volgroup fedora --pesize=32768 pv.8qJs0X-cWnA-2T83-R6VJ-Jwc5-7XDB-xth2Gg
-logvol / --fstype=ext4 --name=root --vgname=fedora --grow --size=1024 --maxsize=10240
-logvol /data --fstype=ext4 --name=data --vgname=fedora --grow --size=1024 --maxsize=10240
-logvol /var --fstype=ext4 --name=var --vgname=fedora --grow --size=1024 --maxsize=5120
-logvol swap --name=swap --vgname=fedora --grow --size=1024 --maxsize=2048
+part /boot --fstype=ext4 --size=512
+part pv.EaGFJm-w7pp-JMFF-02sd-ynAj-3bbx-Yj8Kfz --grow --size=512
+
+volgroup system --pesize=32768 pv.EaGFJm-w7pp-JMFF-02sd-ynAj-3bbx-Yj8Kfz
+logvol / --fstype=ext4 --name=fedora --vgname=system --grow --size=1024 --maxsize=10240
+logvol /data --fstype=ext4 --name=data --vgname=system --grow --size=1024 --maxsize=10240
+logvol /var --fstype=ext4 --name=var --vgname=system --grow --size=1024 --maxsize=5120
+logvol swap --name=swap --vgname=system --grow --size=1024 --maxsize=2048
 
 bootloader --location=mbr --driveorder=sda --append="rhgb quiet" --md5pass=$1$UCcODstZ$SQu.EdskpDLfc5Scg..wN0
 
@@ -46,7 +47,18 @@ repo --name="Yum Rawhide"  --baseurl=http://test:password@10.0.0.29/yum-rawhide/
 gvfs-obexftp
 gdm
 
+#Rebranding requirements
+-fedora-logos
+-fedora-release
+-fedora-release-notes
+generic-release
+generic-logos
+generic-release-notes
+
 %post
+
+#Set Kororaa branding
+sed -i 's/^Generic.*/DPSP\ Remix\ 14/g' /etc/fedora-release /etc/issue
 
 #copy repo file for Google Chrome into /etc/yum.repos.d/
 #copy repo file for VirtualBox into /etc/yum.repos.d/
