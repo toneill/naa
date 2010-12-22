@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<controls>
+  <compliant chapter="Australian Government Information Security Manual" revision="201011">As per IT Security Policy</compliant>
+  <compliant chapter="Information Security in Government" revision="201011">As per IT Security Policy</compliant>
+  <compliant section="The Agency Head" revision="201011">As per IT Security Policy</compliant>
+  
+  <compliant id="1078" revision="0">Agency policy of telephones is defined in Agency Telephone Policy CEI XXX.YYY</compliant>
+  <compliant id="0424" revision="1">Password differences from previous passwords are enforced by the system</compliant>
+  <riskassessed id="0853" revision="0" expire="20151221">Loading of data can be a very long process and as such automated logout and shutdown is not approprate. Screenlocks are sufficient</riskassessed>
+  <dispensation id="1080" revision="0" expire="20151221">Long term archiving cannot use encryption as a reliable preservation technique.</dispensation>
+
+  <notapplicable section="Using the Internet" revision="201011">The system doesn't have internet access</notapplicable>
+  <notapplicable id="1110" revision="0">not a Top Secret area</notapplicable>
+  <notapplicable id="1113" revision="0">not a Top Secret Area</notapplicable>
+  <notapplicable id="0283" revision="2">no HGCE used</notapplicable>
+
+ <compliant section="Media Destruction" revision="201011">System Standard Operating Procedures (ref) refer to ISM for mechanisms.</compliant>
+ <compliant section="Media Disposal" revision="201011">System Standard Operating Procedures (ref) refer to ISM for mechanisms.</compliant>
+ <notapplicable section="Web Applications">no web applications</notapplicable>
+ <notapplicable section="Web Application Development" revision="201011">no web applications</notapplicable >
+
+ <notapplicable section="Secure Multipurpose Internet Mail Extension" revision="201011">no S/MIME</notapplicable>
+ <notapplicable section="OpenPGP Message Format" revision="201011">no PGP</notapplicable>
+ <notapplicable section="Internet Protocol Security" revision="201011">no IPSec</notapplicable>
+ <notapplicable section="Virtual Local Area Networks" revision="201011">no VLANs</notapplicable>
+ <notapplicable section="Wireless Local Area Networks" revision="201011">No wireless on system</notapplicable>
+ <notapplicable section="Internet Protocol Telephony" revision="201011">No wireless on system</notapplicable>
+ <notapplicable section="Peripheral Switches" revision="201011">no KVM switches</notapplicable>
+ <notapplicable chapter="Gateway Security" revision="201011">no cross domain</notapplicable>
+ <notapplicable chapter="Working Off-Site" revision="201011">no working offsite</notapplicable>
+
+</controls>
