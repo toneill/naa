@@ -1,0 +1,30 @@
+ 
+p.compliant {
+
+     color:rgb(0,255,0);
+
+}
+
+
+p.dispensation {
+
+     color:rgb(255,255,0);
+
+}
+
+
+p.review {
+
+     color:rgb(0,0,255);
+
+}
+
+
+
+p.noncompliant {
+
+     color:rgb(255,0,0);
+
+}
+
+
