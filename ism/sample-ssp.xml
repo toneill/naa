@@ -6,8 +6,22 @@
   
   <compliant id="1078" revision="0">Agency policy of telephones is defined in Agency Telephone Policy CEI XXX.YYY</compliant>
   <compliant id="0424" revision="1">Password differences from previous passwords are enforced by the system</compliant>
-  <riskassessed id="0853" revision="0" expire="20151221">Loading of data can be a very long process and as such automated logout and shutdown is not approprate. Screenlocks are sufficient</riskassessed>
-  <dispensation id="1080" revision="0" expire="20151221">Long term archiving cannot use encryption as a reliable preservation technique.</dispensation>
+
+<dispensation id="1080" revision="0" expire="20151221">
+    <why>Encryption of information is not a suitable preservation technique for the long term storage of digital information. The systems that could be put in place to maintain decryption keys for extended priods are likely to break down and prevent access to these important records
+    </why>
+    <alternative>The limited physical and logical scope of the network
+    </alternative>
+    <risk>
+      <initial>This information needs to be protect</initial>
+      <effectofalternate>The limited physical and logical scope of the network
+      </effectofalternate>
+      <residuallikelyhood>Rare</residuallikelyhood>
+      <residualconsequence>Minor</residualconsequence>
+      <residualrisk>Low</residualrisk>
+    </risk>
+    <reference>see System Security Plan - Dispensation #1</reference>
+</dispensation>
 
   <notapplicable section="Using the Internet" revision="201011">The system doesn't have internet access</notapplicable>
   <notapplicable id="1110" revision="0">not a Top Secret area</notapplicable>

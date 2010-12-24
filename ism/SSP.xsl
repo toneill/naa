@@ -21,6 +21,8 @@ there is a "Non-compliant - missing control" in the output in the noncompliant p
 Compliant controls are in .green, controls that were written against a previous wording of the control are in blue and dispensation 
 (previously called waivers and risk assessments) are in yellow.
 
+Multiple SSP controls can be placed for a single ISM requirement.
+
 The output hides "recommends" level controls unless these is a specific control in the SSP XML document.
 
 Using this XML transform:
@@ -40,8 +42,23 @@ The format of the SSP XML input is:
 <controls>
 
   <compliant  ....>Why this system is compliant e.g. reference </compliant>
-  <riskassessed ....>What justfication we have put in place to satisify the accreditation authority for not compling with "should"/"should not" controls (ISM control #1061)</riskassessed>
-  <dispensation ....>What justification we have put in place to  satisify the accreditation authority for not compling with "must"/"must not" controls (ISM control #0001)</dispensation>
+  <dispensation ....>What justification we have put in place to  satisify the accreditation authority for not compling with controls (ISM control #0001)
+    <why>
+    </why>
+    <alternative>
+    </alternative>
+    <alternative>
+    </alternative>
+    <risk>
+      <initial></initial>
+      <effectofalternate>
+      </effectofalternate>
+      <residuallikelyhood>Rare</residuallikelyhood>
+      <residualconsequence>Minor</residualconsequence>
+      <residualrisk>Low</residualrisk>
+    </risk>
+    <reference></reference>
+  </dispensation>
   <notapplicable ....>Why this control/section is not applicable to the system</notapplicable>
   <noncompliant .....>We know we are not compliant and some process should currently be in place to show this</noncompliant>
   
@@ -52,11 +69,11 @@ id="{num}" revision="{number}" Indicates that this is a control for the ISM cont
 section="{section name}" revision="{ismversion}" The whole section can be grouped using this attribute. The revision describes the ISM version so for future releases the applicablility of this section can be re-examined.
 chapter="{chapter name}" revision="{ismversion}" The whole chapter can be grouped using this attribute. The revision describes the ISM version so for future releases the applicablility of this section can be re-examined.
 
-For riskassessed/dispensation there is required to be a expire="yyyymmdd" to indicate the date at which the control is required to be re-evaluated.
-
+For dispensation there is required to be a expire="yyyymmdd" to indicate the date at which the control is required to be re-evaluated.
 
 Example:
 This is a sample ssp.xml input to the document.
+
 
 <?xml version="1.0" encoding="UTF-8"?>
 <controls>
@@ -66,8 +83,22 @@ This is a sample ssp.xml input to the document.
   
   <compliant id="1078" revision="0">Agency policy of telephones is defined in Agency Telephone Policy CEI XXX.YYY</compliant>
   <compliant id="0424" revision="1">Password differences from previous passwords are enforced by the system</compliant>
-  <riskassessed id="0853" revision="0" expire="20151221">Loading of data can be a very long process and as such automated logout and shutdown is not approprate. Screenlocks are sufficient</riskassessed>
-  <dispensation id="1080" revision="0" expire="20151221">Long term archiving cannot use encryption as a reliable preservation technique.</dispensation>
+
+<dispensation id="1080" revision="0" expire="20151221">
+    <why>Encryption of information is not a suitable preservation technique for the long term storage of digital information. The systems that could be put in place to maintain decryption keys for extended priods are likely to break down and prevent access to these important records
+    </why>
+    <alternative>The limited physical and logical scope of the network
+    </alternative>
+    <risk>
+      <initial>This information needs to be protect</initial>
+      <effectofalternate>The limited physical and logical scope of the network
+      </effectofalternate>
+      <residuallikelyhood>Rare</residuallikelyhood>
+      <residualconsequence>Minor</residualconsequence>
+      <residualrisk>Low</residualrisk>
+    </risk>
+    <reference>see System Security Plan - Dispensation #1</reference>
+</dispensation>
 
   <notapplicable section="Using the Internet" revision="201011">The system doesn't have internet access</notapplicable>
   <notapplicable id="1110" revision="0">not a Top Secret area</notapplicable>
@@ -93,6 +124,7 @@ This is a sample ssp.xml input to the document.
 
 Version History:
 
+20101224 Display the Rational associated with non-compiant or missing controls
 20101221 Current version based of the XML schema release December 2010
 
 
@@ -101,11 +133,8 @@ TODO Features and Bugs:
  * Accept multiple inputs - e.g. a site SSP.xml plus a system specific SSP
                                               , or a no-HGCE to filter out the HGCE controls for systems that don't use them.
  * Extra fields in the input file to present a more general header to the produced document.
- * Enforce riskassesed for "should"/"should not" and dispensation for "must"/"must not"
- * No current support for breaks of "requires" controls (ISM control #1060 )
- * Not sure the logic around recommends level controls
-
-
+ * Expand expire tag to all control types
+ 
 Copyright - Commonwealth of Australia 2010
 Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
 
@@ -169,58 +198,73 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
         <xsl:otherwise>
 
           <!-- Within controls process it on a block by block basis-->
+          <xsl:variable name="rationale" select="rationale"/>
           <xsl:for-each select="controls[.//classification=$classification and .//compliance!='recommended']">
-            <xsl:apply-templates/>
+            <xsl:for-each select="block">
+ 
+             <xsl:variable name="sectionTitle" select="title"/>
+             <xsl:variable name="id" select="ID"/>
+             <xsl:if test="classification=$classification and (compliance!='recommended' or $SSPLookupDoc//*[@id=$id])">
+             <h5>
+               <xsl:value-of select="title"/>
+            </h5>
+             <p class="p2">
+               <xsl:text>Control: </xsl:text>
+               <xsl:value-of select="ID"/>
+               <xsl:text>; Revision: </xsl:text>
+               <xsl:value-of select="revision"/>
+               <xsl:text>; Updated: </xsl:text>
+               <xsl:value-of select="updated"/>
+               <xsl:text>; Applicability: </xsl:text>
+               <xsl:for-each select="classification">
+                 <xsl:value-of select="."/>
+                 <xsl:choose>
+                   <xsl:when test="position()!=last()">
+                     <xsl:text>, </xsl:text>
+                   </xsl:when>
+                 </xsl:choose>
+               </xsl:for-each>
+               <xsl:text>; Compliance: </xsl:text>
+               <xsl:value-of select="compliance"/>
+             </p>
+             <!-- Display the content of the block -->
+             <xsl:apply-templates select="content"/>
+             
+             <!-- Display the controls  -->
+             <xsl:variable name="revision" select="revision"/>
+             <xsl:variable name="controllookup" select="$SSPLookupDoc//*[@id=$id]"/>
+             <xsl:choose>
+               <!-- find control(s) -->
+               <xsl:when test="$SSPLookupDoc//riskassessed[@id=$id] | $SSPLookupDoc//dispensation[@id=$id] | $SSPLookupDoc//noncompliant[@id=$id]">
+                  <!-- display the rational if there is a noncompliant control -->
+                 <p class="rational">Rational:</p>
+                 <xsl:apply-templates select="$rationale/block[title=$sectionTitle]/content"/>
+                 <xsl:apply-templates select="$controllookup">
+                  <xsl:with-param name="revision" select="$revision"/>
+                 </xsl:apply-templates>
+               </xsl:when>
+               <xsl:when test="$controllookup">
+                 <xsl:apply-templates select="$controllookup">
+                  <xsl:with-param name="revision" select="$revision"/>
+                 </xsl:apply-templates>
+               </xsl:when>
+               <xsl:otherwise>
+                 <p class="rational">Rational:</p>
+                 <xsl:apply-templates select="$rationale/block[title=$title]/content"/>
+                <p class="noncompliant">Non compliant: Missing control<br/></p>
+                </xsl:otherwise>
+               </xsl:choose>
+             </xsl:if>
+
+
+             </xsl:for-each>
           </xsl:for-each>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:if>
   </xsl:template>
   
-  <xsl:template match="block">
-    <xsl:variable name="id" select="ID"/>
-    <xsl:if test="classification=$classification and (compliance!='recommended' or $SSPLookupDoc//*[@id=$id])">
-    <h5>
-      <xsl:value-of select="title"/>
-    </h5>
-    <p class="p2">
-      <xsl:text>Control: </xsl:text>
-      <xsl:value-of select="ID"/>
-      <xsl:text>; Revision: </xsl:text>
-      <xsl:value-of select="revision"/>
-      <xsl:text>; Updated: </xsl:text>
-      <xsl:value-of select="updated"/>
-      <xsl:text>; Applicability: </xsl:text>
-      <xsl:for-each select="classification">
-        <xsl:value-of select="."/>
-        <xsl:choose>
-          <xsl:when test="position()!=last()">
-            <xsl:text>, </xsl:text>
-          </xsl:when>
-        </xsl:choose>
-      </xsl:for-each>
-      <xsl:text>; Compliance: </xsl:text>
-      <xsl:value-of select="compliance"/>
-    </p>
-    <!-- Display the content of the block -->
-    <xsl:apply-templates select="content"/>
-    
-    <!-- Display the controls  -->
-    <xsl:variable name="revision" select="revision"/>
-    <xsl:variable name="controllookup" select="$SSPLookupDoc//*[@id=$id]"/>
-    <xsl:choose>
-      <!-- find control(s) -->
-      <xsl:when test="$controllookup">
-        <xsl:apply-templates select="$controllookup">
-         <xsl:with-param name="revision" select="$revision"/>
-         </xsl:apply-templates>
-    </xsl:when>
-    <xsl:otherwise>
-     <p class="noncompliant">Non compliant: Missing control<br/></p>
-    </xsl:otherwise>
-    </xsl:choose>
-    </xsl:if>
-  </xsl:template>
+<!-- Types in the SSP.xml input file-->
 
 <xsl:template match="compliant">
   <xsl:param name="revision"/>
@@ -234,39 +278,57 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="riskassessed">
-<!-- this is for "should" / "should not" controls -->
+<xsl:template match="dispensation">
   <xsl:param name="revision"/>
   <xsl:param name="expire"/>
   <xsl:choose>
     <xsl:when test="@expire &lt; $currentdate">
-      <p class="noncompliant">Non-compliant: Expired (<xsl:value-of select="@expire"/>): Previously accepted(rev:<xsl:value-of select="@revision"/>): <xsl:value-of select="."/><br/></p>
+      <p class="noncompliant">Non-compliant - Expired: <xsl:value-of select="@expire"/></p>
+      <xsl:if test="@revision &lt; $revision">
+       <p class="noncompliant">Assessed against revision <xsl:value-of select="@revision"/> - required review</p><br/>
+      </xsl:if>
+      <table>
+      <xsl:apply-templates/>
+      </table>
+      <br/>
     </xsl:when>
     <xsl:when test="@revision &lt; $revision">
-      <p class="review">Non-compliant: Expires (<xsl:value-of select="@expire"/>): Risk Accepted(rev:<xsl:value-of select="@revision"/>): <xsl:value-of select="."/><br/></p>
+      <p class="review">Non-compliant</p>
+      <p class="review">Expires: <xsl:value-of select="@expire"/></p>
+      <p class="review">Assessed against revision <xsl:value-of select="@revision"/> - required review</p><br/>
+      <table>
+      <xsl:apply-templates/>
+      </table>
+      <br/>
     </xsl:when>
     <xsl:otherwise>
-      <p class="dispensation">Non-compliant: Expires (<xsl:value-of select="@expire"/>): Risk Accepted: <xsl:value-of select="."/><br/></p>
+      <p class="dispensation">Non-compliant - Expires: <xsl:value-of select="@expire"/></p>
+      <table>
+      <xsl:apply-templates/>
+      </table>
+      <br/>
     </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
 
+<xsl:template match="why">
+<tr><td>Reasons</td><td colspan="5"><xsl:value-of select="."/></td></tr>
+</xsl:template>
 
-<xsl:template match="dispensation">
-<!-- this is for "must" / "must not" controls -->
-  <xsl:param name="revision"/>
-  <xsl:param name="expire"/>
-  <xsl:choose>
-    <xsl:when test="@expire &lt; $currentdate">
-      <p class="noncompliant">Manditory control - non-compliant: Expired (<xsl:value-of select="@expire"/>): Previously accepted(rev:<xsl:value-of select="@revision"/>): <xsl:value-of select="."/><br/></p>
-    </xsl:when>
-    <xsl:when test="@revision &lt; $revision">
-      <p class="review">Manditory control - non-compliant: Expires (<xsl:value-of select="@expire"/>): Risk Accepted(rev:<xsl:value-of select="@revision"/>): <xsl:value-of select="."/><br/></p>
-    </xsl:when>
-    <xsl:otherwise>
-      <p class="dispensation">Manditory control - non-compliant: Expires (<xsl:value-of select="@expire"/>): Risk Accepted: <xsl:value-of select="."/><br/></p>
-    </xsl:otherwise>
-  </xsl:choose>
+<xsl:template match="alternative">
+<tr><td>Alternative Risk Mitigation</td><td colspan="5"><xsl:value-of select="."/></td></tr>
+</xsl:template>
+
+<xsl:template match="risk">
+<tr><td>Initial Risk</td><td colspan="5"><xsl:value-of select="initial"/></td></tr>
+<tr><td>Effect of Alternate Mitigation</td><td colspan="5"><xsl:value-of select="effectofalternate"/></td></tr>
+<tr><td>Residual Likelyhood</td><td><xsl:value-of select="residuallikelyhood"/></td>
+<td>Residual Consequence</td><td><xsl:value-of select="residualconsequence"/></td>
+<td>Residual Risk</td><td><xsl:value-of select="residualrisk"/></td></tr>
+</xsl:template>
+
+<xsl:template match="reference">
+<p class="p1"><xsl:value-of select="."/><br/></p>
 </xsl:template>
 
 <xsl:template match="notapplicable">
@@ -307,6 +369,7 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
   <xsl:template match="para">
     <p class="p1"><xsl:value-of select="."/><br/> </p>
   </xsl:template>
+  
   <xsl:template match="list">
     <p class="p1">
       <xsl:value-of select="head"/>
