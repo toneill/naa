@@ -124,6 +124,7 @@ This is a sample ssp.xml input to the document.
 
 Version History:
 
+20110104 Remove obsolete tags riskassessed and noncompliant as the dispensation accounts for both types.
 20101224 Display the Rational associated with non-compiant or missing controls
 20101221 Current version based of the XML schema release December 2010
 
@@ -133,9 +134,8 @@ TODO Features and Bugs:
  * Accept multiple inputs - e.g. a site SSP.xml plus a system specific SSP
                                               , or a no-HGCE to filter out the HGCE controls for systems that don't use them.
  * Extra fields in the input file to present a more general header to the produced document.
- * Expand expire tag to all control types
  
-Copyright - Commonwealth of Australia 2010
+Copyright - Commonwealth of Australia 2011
 Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
 
 -->
@@ -235,8 +235,8 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
              <xsl:variable name="controllookup" select="$SSPLookupDoc//*[@id=$id]"/>
              <xsl:choose>
                <!-- find control(s) -->
-               <xsl:when test="$SSPLookupDoc//riskassessed[@id=$id] | $SSPLookupDoc//dispensation[@id=$id] | $SSPLookupDoc//noncompliant[@id=$id]">
-                  <!-- display the rational if there is a noncompliant control -->
+               <xsl:when test="$SSPLookupDoc//dispensation[@id=$id]">
+                  <!-- display the rational if there is a dispenstation -->
                  <p class="rational">Rational:</p>
                  <xsl:apply-templates select="$rationale/block[title=$sectionTitle]/content"/>
                  <xsl:apply-templates select="$controllookup">
