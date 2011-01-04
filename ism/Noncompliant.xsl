@@ -8,7 +8,7 @@
   <xsl:param name="classification" select="'S/HP'"/>
   <xsl:param name="ismversion" select="'201011'"/>
   <xsl:param name="currentdate" select="'20110105'"/>
-  <xsl:variable name="SSPLookupDoc" select="document('Digipres.xml')/controls"/>
+  <xsl:variable name="SSPLookupDoc" select="document('sample-ssp.xml')/controls"/>
   
 <!-- 
 
