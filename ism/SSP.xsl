@@ -7,7 +7,7 @@
   
   <xsl:param name="classification" select="'S/HP'"/>
   <xsl:param name="ismversion" select="'201011'"/>
-  <xsl:param name="currentdate" select="'20110105'"/>
+  <xsl:param name="currentdate" select="'20101221'"/>
   <xsl:variable name="SSPLookupDoc" select="document('sample-ssp.xml')/controls"/>
   
 <!-- 
@@ -125,7 +125,8 @@ This is a sample ssp.xml input to the document.
 
 Version History:
 
-20110105 Adds expire tags for compliant/noncomplaint/notapplicable
+20110105 Adds expire tags for compliant/noncompliant/notapplicable
+              Display Rational where no control exists. Display header on dispensation
 20110104 Remove obsolete tags riskassessed and noncompliant as the dispensation accounts for both types.
 20101224 Display the Rational associated with non-compiant or missing controls
 20101221 Current version based of the XML schema release December 2010
@@ -252,7 +253,7 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
                </xsl:when>
                <xsl:otherwise>
                  <p class="rational">Rational:</p>
-                 <xsl:apply-templates select="$rationale/block[title=$title]/content"/>
+                 <xsl:apply-templates select="$rationale/block[title=$sectionTitle]/content"/>
                 <p class="noncompliant">Non compliant: Missing control<br/></p>
                 </xsl:otherwise>
                </xsl:choose>
@@ -331,7 +332,7 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
 
 <xsl:template match="dispensation">
   <xsl:param name="revision"/>
-  <xsl:param name="expire"/>
+  <h4>Dispensation:</h4>
   <xsl:choose>
     <xsl:when test="@expire &lt; $currentdate">
       <p class="noncompliant">Non-compliant - Expired: <xsl:value-of select="@expire"/></p>
