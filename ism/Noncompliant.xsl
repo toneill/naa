@@ -122,11 +122,11 @@ This is a sample ssp.xml input to the document.
 
 Version History:
 
+20110105 Hide part headings. chapter and section headings that are expired also get displayed.
 20110105 Initial version based of SSP.xsl
 
 TODO Features and Bugs:
 
- * Hide chapter and section headings when there is nothing to display in that section
  * Accept multiple inputs - e.g. a site SSP.xml plus a system specific SSP
                                               , or a no-HGCE to filter out the HGCE controls for systems that don't use them.
  * Extra fields in the input file to present a more general header to the produced document.
@@ -145,10 +145,6 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
   
   <xsl:template match="part">
     <xsl:if test=".//classification=$classification and .//compliance!='recommended'">
-    
-      <h1>
-        <xsl:value-of select="title"/>
-      </h1>
       <xsl:apply-templates/>
     </xsl:if>
   </xsl:template>
@@ -161,13 +157,13 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
 
       <xsl:choose>
           <!-- find overarching control -->
-          <xsl:when test="$chapterlookup[@revision &lt; $ismversion]">
+          <xsl:when test="$chapterlookup[@revision &lt; $ismversion] | $chapterlookup[@expire &lt; $currentdate] ">
             <h2><xsl:value-of select="title"/></h2>
              <xsl:apply-templates select="$chapterlookup">
                <xsl:with-param name="revision" select="$ismversion"/>
              </xsl:apply-templates>
           </xsl:when>
-          <xsl:when test="$chapterlookup">
+          <xsl:when test="$chapterlookup"><!-- current control is in place excempting this chapter -->
           </xsl:when>
           <xsl:otherwise>
             <xsl:apply-templates/>
@@ -182,7 +178,7 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
       <xsl:variable name="sectionlookup" select="$SSPLookupDoc//*[@section=$title]"/>
       <xsl:choose>
           <!-- find overarching control -->
-          <xsl:when test="$sectionlookup[@revision &lt; $ismversion]">
+          <xsl:when test="$sectionlookup[@revision &lt; $ismversion] | $sectionlookup[@expire &lt; $currentdate]">
              <h3>
                <xsl:value-of select="title"/>
              </h3>
@@ -190,7 +186,7 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
                <xsl:with-param name="revision" select="$ismversion"/>
              </xsl:apply-templates>
         </xsl:when>
-        <xsl:when test="$sectionlookup">
+        <xsl:when test="$sectionlookup"><!-- current control is in place excempting this section-->
         </xsl:when>
         <xsl:otherwise>
 
