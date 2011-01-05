@@ -122,8 +122,11 @@ This is a sample ssp.xml input to the document.
 
 Version History:
 
-20110105 Hide part headings. chapter and section headings that are expired also get displayed.
 20110105 Initial version based of SSP.xsl
+             Hide part headings
+             chapter and section headings that are expired also get displayed.
+             Display Rational where no control exists.
+             Display header on dispensation
 
 TODO Features and Bugs:
 
@@ -158,7 +161,7 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
       <xsl:choose>
           <!-- find overarching control -->
           <xsl:when test="$chapterlookup[@revision &lt; $ismversion] | $chapterlookup[@expire &lt; $currentdate] ">
-            <h2><xsl:value-of select="title"/></h2>
+            <h1><xsl:value-of select="title"/></h1>
              <xsl:apply-templates select="$chapterlookup">
                <xsl:with-param name="revision" select="$ismversion"/>
              </xsl:apply-templates>
@@ -179,9 +182,9 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
       <xsl:choose>
           <!-- find overarching control -->
           <xsl:when test="$sectionlookup[@revision &lt; $ismversion] | $sectionlookup[@expire &lt; $currentdate]">
-             <h3>
+             <h2>
                <xsl:value-of select="title"/>
-             </h3>
+             </h2>
              <xsl:apply-templates select="$sectionlookup">
                <xsl:with-param name="revision" select="$ismversion"/>
              </xsl:apply-templates>
@@ -200,9 +203,9 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
              <xsl:variable name="revision" select="revision"/>
              <!--  missing a compliant/notapplicable control or has noncompliant control or dispensation listed or newer revision of control or expired control -->
              <xsl:if test="not( $SSPLookupDoc//compliant[@id=$id] | $SSPLookupDoc//notapplicable[@id=$id] ) or ( $SSPLookupDoc//noncompliant[@id=$id] | $SSPLookupDoc//dispensation[@id=$id] | $SSPLookupDoc//*[@id=$id and ( @revision &lt; $revision )] |$SSPLookupDoc//*[@id=$id and (@expire &lt; $currentdate) ] )">
-             <h5>
+             <h3>
                <xsl:value-of select="title"/>
-            </h5>
+            </h3>
              <p class="p2">
                <xsl:text>Control: </xsl:text>
                <xsl:value-of select="ID"/>
@@ -229,7 +232,7 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
              <xsl:variable name="controllookup" select="$SSPLookupDoc//noncompliant[@id=$id] | $SSPLookupDoc//dispensation[@id=$id] | $SSPLookupDoc//*[@id=$id and ( @revision &lt; $revision )] |$SSPLookupDoc//*[@id=$id and (@expire &lt; $currentdate) ]"/>
              <xsl:choose>
                <!-- find control(s) -->
-               <xsl:when test="$SSPLookupDoc//dispensation[@id=$id]">
+               <xsl:when test="$SSPLookupDoc//dispensation[@id=$id] | $SSPLookupDoc//noncompliant[@id=$id]">
                   <!-- display the rational if there is a dispenstation -->
                  <p class="rational">Rational:</p>
                  <xsl:apply-templates select="$rationale/block[title=$sectionTitle]/content"/>
@@ -244,7 +247,7 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
                </xsl:when>
                <xsl:otherwise>
                  <p class="rational">Rational:</p>
-                 <xsl:apply-templates select="$rationale/block[title=$title]/content"/>
+                 <xsl:apply-templates select="$rationale/block[title=$sectionTitle]/content"/>
                 <p class="noncompliant">Non compliant: Missing control<br/></p>
                 </xsl:otherwise>
                </xsl:choose>
@@ -319,7 +322,7 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
 
 <xsl:template match="dispensation">
   <xsl:param name="revision"/>
-  <xsl:param name="expire"/>
+  <h4>Dispensation:</h4>
   <xsl:choose>
     <xsl:when test="@expire &lt; $currentdate">
       <p class="noncompliant">Non-compliant - Expired: <xsl:value-of select="@expire"/></p>
