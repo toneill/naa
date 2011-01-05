@@ -7,7 +7,7 @@
   
   <xsl:param name="classification" select="'S/HP'"/>
   <xsl:param name="ismversion" select="'201011'"/>
-  <xsl:param name="currentdate" select="'20101221'"/>
+  <xsl:param name="currentdate" select="'20110105'"/>
   <xsl:variable name="SSPLookupDoc" select="document('sample-ssp.xml')/controls"/>
   
 <!-- 
@@ -68,8 +68,9 @@ Each of the above controls has a number of attributes that show what control(s) 
 id="{num}" revision="{number}" Indicates that this is a control for the ISM control number and the revision at which it was when the last assessment of the control was done.
 section="{section name}" revision="{ismversion}" The whole section can be grouped using this attribute. The revision describes the ISM version so for future releases the applicablility of this section can be re-examined.
 chapter="{chapter name}" revision="{ismversion}" The whole chapter can be grouped using this attribute. The revision describes the ISM version so for future releases the applicablility of this section can be re-examined.
+expire="yyyymmdd" ato indicate the date at which the control is required to be re-evaluated.
 
-For dispensation there is required to be a expire="yyyymmdd" to indicate the date at which the control is required to be re-evaluated.
+For dispensation there is required to be a expire attribute.
 
 Example:
 This is a sample ssp.xml input to the document.
@@ -114,16 +115,17 @@ This is a sample ssp.xml input to the document.
  <notapplicable section="OpenPGP Message Format" revision="201011">no PGP</notapplicable>
  <notapplicable section="Internet Protocol Security" revision="201011">no IPSec</notapplicable>
  <notapplicable section="Virtual Local Area Networks" revision="201011">no VLANs</notapplicable>
- <notapplicable section="Wireless Local Area Networks" revision="201011">No wireless on system</notapplicable>
  <notapplicable section="Internet Protocol Telephony" revision="201011">No wireless on system</notapplicable>
  <notapplicable section="Peripheral Switches" revision="201011">no KVM switches</notapplicable>
  <notapplicable chapter="Gateway Security" revision="201011">no cross domain</notapplicable>
  <notapplicable chapter="Working Off-Site" revision="201011">no working offsite</notapplicable>
+ <notapplicable section="Wireless Local Area Networks" revision="201011" expire="20111201">No wireless on system - Wireless planned for 20111201</notapplicable>
 
 </controls>
 
 Version History:
 
+20110105 Adds expire tags for compliant/noncomplaint/notapplicable
 20110104 Remove obsolete tags riskassessed and noncompliant as the dispensation accounts for both types.
 20101224 Display the Rational associated with non-compiant or missing controls
 20101221 Current version based of the XML schema release December 2010
@@ -235,8 +237,8 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
              <xsl:variable name="controllookup" select="$SSPLookupDoc//*[@id=$id]"/>
              <xsl:choose>
                <!-- find control(s) -->
-               <xsl:when test="$SSPLookupDoc//dispensation[@id=$id]">
-                  <!-- display the rational if there is a dispenstation -->
+               <xsl:when test="$SSPLookupDoc//dispensation[@id=$id] | $SSPLookupDoc//noncompliant[@id=$id]">
+                  <!-- display the rational if there is a dispensation or noncompliant -->
                  <p class="rational">Rational:</p>
                  <xsl:apply-templates select="$rationale/block[title=$sectionTitle]/content"/>
                  <xsl:apply-templates select="$controllookup">
@@ -269,6 +271,13 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
 <xsl:template match="compliant">
   <xsl:param name="revision"/>
   <xsl:choose>
+      <xsl:when test="@expire &lt; $currentdate">
+       <p class="noncompliant">Non-compliant - Expired: <xsl:value-of select="@expire"/></p>
+       <xsl:if test="@revision &lt; $revision">
+         <p class="noncompliant">Assessed against revision <xsl:value-of select="@revision"/> - required review</p><br/>
+       </xsl:if>
+      <p class="noncompliant">Compliant: <xsl:value-of select="."/><br/></p>
+      </xsl:when>
     <xsl:when test="@revision &lt; $revision">
       <p class="review">Compliant(rev:<xsl:value-of select="@revision"/>): <xsl:value-of select="."/><br/></p>
     </xsl:when>
@@ -277,6 +286,48 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
     </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
+
+
+<xsl:template match="notapplicable">
+  <xsl:param name="revision"/>
+  <xsl:choose>
+      <xsl:when test="@expire &lt; $currentdate">
+       <p class="noncompliant">Non-compliant - Expired: <xsl:value-of select="@expire"/></p>
+       <xsl:if test="@revision &lt; $revision">
+         <p class="noncompliant">Assessed against revision <xsl:value-of select="@revision"/> - required review</p><br/>
+       </xsl:if>
+     <p class="noncompliant">Not Applicable: <xsl:value-of select="."/><br/></p>
+    </xsl:when>
+    <xsl:when test="@revision &lt; $revision">
+      <p class="oldcompliant">Not Applicable(rev:<xsl:value-of select="@revision"/>): <xsl:value-of select="."/><br/></p>
+    </xsl:when>
+    <xsl:otherwise>
+      <p class="compliant">Not Applicable: <xsl:value-of select="."/><br/></p>
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
+
+<xsl:template match="noncompliant">
+  <xsl:param name="revision"/>
+  <xsl:choose>
+      <!-- expired noncompliant is compliant(????) -->
+    <xsl:when test="@expire &lt; $currentdate">
+      <p class="compliant">Non-compliant - Expired: <xsl:value-of select="@expire"/></p>
+      <xsl:if test="@revision &lt; $revision">
+       <p class="compliant">Assessed against revision <xsl:value-of select="@revision"/> - required review</p><br/>
+      </xsl:if>
+     <p class="compliant">Not Compliant: <xsl:value-of select="."/><br/></p>
+    </xsl:when>
+    <xsl:when test="@revision &lt; $revision">
+      <p class="noncompliant">Not Compliant(rev:<xsl:value-of select="@revision"/>): <xsl:value-of select="."/><br/></p>
+    </xsl:when>
+    <xsl:otherwise>
+      <p class="noncompliant">Not Compliant: <xsl:value-of select="."/><br/></p>
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
 
 <xsl:template match="dispensation">
   <xsl:param name="revision"/>
@@ -329,31 +380,6 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
 
 <xsl:template match="reference">
 <p class="p1"><xsl:value-of select="."/><br/></p>
-</xsl:template>
-
-<xsl:template match="notapplicable">
-  <xsl:param name="revision"/>
-  <xsl:choose>
-    <xsl:when test="@revision &lt; $revision">
-      <p class="oldcompliant">Not Applicable(rev:<xsl:value-of select="@revision"/>): <xsl:value-of select="."/><br/></p>
-    </xsl:when>
-    <xsl:otherwise>
-      <p class="compliant">Not Applicable: <xsl:value-of select="."/><br/></p>
-    </xsl:otherwise>
-  </xsl:choose>
-</xsl:template>
-
-
-<xsl:template match="noncompliant">
-  <xsl:param name="revision"/>
-  <xsl:choose>
-    <xsl:when test="@revision &lt; $revision">
-      <p class="noncompliant">Not Compliant(rev:<xsl:value-of select="@revision"/>): <xsl:value-of select="."/><br/></p>
-    </xsl:when>
-    <xsl:otherwise>
-      <p class="noncompliant">Not Compliant: <xsl:value-of select="."/><br/></p>
-    </xsl:otherwise>
-  </xsl:choose>
 </xsl:template>
 
 <!-- these are here to prevent duplicate output -->
