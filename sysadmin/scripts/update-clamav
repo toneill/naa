@@ -8,9 +8,12 @@ cd /data/clamav/db/
 rm *cvd
 
 #Using curl
-curl --proxy 10.0.1.45:80 --proxy-ntlm --proxy-user `cat /etc/ntlmaps/server.cfg |grep -i "^USER:" |awk {'print $2'}`:`cat /etc/ntlmaps/server.cfg |grep -i "^PASSWORD:" |awk {'print $2'}` http://db.local.clamav.net/main.cvd -o main.cvd
-curl --proxy 10.0.1.45:80 --proxy-ntlm --proxy-user `cat /etc/ntlmaps/server.cfg |grep -i "^USER:" |awk {'print $2'}`:`cat /etc/ntlmaps/server.cfg |grep -i "^PASSWORD:" |awk {'print $2'}` http://db.local.clamav.net/daily.cvd -o daily.cvd
-curl --proxy 10.0.1.45:80 --proxy-ntlm --proxy-user `cat /etc/ntlmaps/server.cfg |grep -i "^USER:" |awk {'print $2'}`:`cat /etc/ntlmaps/server.cfg |grep -i "^PASSWORD:" |awk {'print $2'}` http://db.local.clamav.net/bytecode.cvd -o bytecode.cvd
+curl -L --proxy 10.0.1.45:80 --proxy-ntlm --proxy-user `cat /etc/cntlm.conf |grep Username |awk {'print $2'}`:`cat /etc/cntlm.conf |grep Password |awk {'print $2'}` http://db.local.clamav.net/main.cvd -o main.cvd
+curl -L --proxy 10.0.1.45:80 --proxy-ntlm --proxy-user `cat /etc/cntlm.conf |grep Username |awk {'print $2'}`:`cat /etc/cntlm.conf |grep Password |awk {'print $2'}` http://db.local.clamav.net/daily.cvd -o daily.cvd
+curl -L --proxy 10.0.1.45:80 --proxy-ntlm --proxy-user `cat /etc/cntlm.conf |grep Username |awk {'print $2'}`:`cat /etc/cntlm.conf |grep Password |awk {'print $2'}` http://db.local.clamav.net/bytecode.cvd -o bytecode.cvd
+#curl -L --proxy 10.0.1.45:80 --proxy-ntlm --proxy-user `cat /etc/ntlmaps/server.cfg |grep -i "^USER:" |awk {'print $2'}`:`cat /etc/ntlmaps/server.cfg |grep -i "^PASSWORD:" |awk {'print $2'}` http://db.local.clamav.net/main.cvd -o main.cvd
+#curl -L --proxy 10.0.1.45:80 --proxy-ntlm --proxy-user `cat /etc/ntlmaps/server.cfg |grep -i "^USER:" |awk {'print $2'}`:`cat /etc/ntlmaps/server.cfg |grep -i "^PASSWORD:" |awk {'print $2'}` http://db.local.clamav.net/daily.cvd -o daily.cvd
+#curl -L --proxy 10.0.1.45:80 --proxy-ntlm --proxy-user `cat /etc/ntlmaps/server.cfg |grep -i "^USER:" |awk {'print $2'}`:`cat /etc/ntlmaps/server.cfg |grep -i "^PASSWORD:" |awk {'print $2'}` http://db.local.clamav.net/bytecode.cvd -o bytecode.cvd
 
 #Using wget
 #wget --no-cache http://db.local.clamav.net/main.cvd

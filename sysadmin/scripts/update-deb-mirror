@@ -1,21 +1,21 @@
 #!/bin/bash
 
-#This file pulls down the debian mirrors we use, to the local collaboration station.
-#The sync-update-drive script then rsync's this to an external drive for moving to other systems.
+export http_proxy="http://localhost:5865"
 
 cd /data/debs
 
-#Ubuntu 64bit only - hardy, intrepid
-debmirror --ignore-small-errors --nosource --passive --host=mirror.internode.on.net --root=:ubuntu --method=rsync --progress --dist=intrepid,intrepid-updates,intrepid-security,hardy,hardy-updates,hardy-security --section=main/debian-installer,main/dist-upgrader-all,main,multiverse,restricted,universe --arch=amd64 ubuntu/ --ignore-release-gpg
+#Ubuntu
+debmirror --rsync-options="-aIL --partial --bwlimit=1024 --delete" --ignore-small-errors --nosource --passive --host=mirror.internode.on.net --root=:ubuntu --method=rsync --progress --dist=lucid,lucid-updates,lucid-security,maverick,maverick-updates,maverick-security --section=main,multiverse,restricted,universe --arch=amd64 ubuntu/ --ignore-release-gpg
 
-#Non-official updated clamav packages for Ubuntu
-debmirror --ignore-small-errors --nosource --passive --host=ppa.launchpad.net --root=ubuntu-clamav/ubuntu --method=http --progress --dist=intrepid,hardy --section=main,multiverse,restricted,universe --arch=amd64 ubuntu-clamav/ --ignore-release-gpg
+#ClamAV updates
+#debmirror --rsync-options="-aIL --partial --bwlimit=1024 --delete" --ignore-small-errors --nosource --passive --host=ppa.launchpad.net --root=ubuntu-clamav/ppa/ubuntu --method=http --progress --dist=lucid,lucid-updates,lucid-security --section=main --arch=amd64 ubuntu-clamav/ --ignore-release-gpg
 
-#Non-official updates OpenOffice.org packages for Ubuntu
-debmirror --ignore-small-errors --nosource --passive --host=ppa.launchpad.net --root=openoffice-pkgs/ubuntu --method=http --progress --dist=intrepid,hardy --section=main,multiverse,restricted,universe --arch=amd64 ubuntu-OOo/ --ignore-release-gpg
+#OpenOffice.org updates
+#debmirror --rsync-options="-aIL --partial --bwlimit=1024 --delete" --ignore-small-errors --nosource --passive --host=ppa.launchpad.net --root=openoffice-pkgs/ppa/ubuntu --method=http --progress --dist=lucid --section=main --arch=amd64 ubuntu-OOo/ --ignore-release-gpg
 
-#DRBL mirror for clonezilla
-debmirror --ignore-small-errors --nosource --passive --host=drbl.sourceforge.net --root=drbl-core --method=http --progress --dist=drbl --section=stable --arch=amd64 drbl/ --ignore-release-gpg
+#Updated OpenJDK
+#debmirror --rsync-options="-aIL --partial --bwlimit=1024 --delete" --ignore-small-errors --nosource --passive --host=ppa.launchpad.net --root=openjdk/ppa/ubuntu --method=http --progress --dist=lucid --section=main --arch=amd64 ubuntu-openjdk/ --ignore-release-gpg
 
-#Debian
-#debmirror --nosource --passive --host=mirror.internode.on.net --root=:debian --method=rsync --progress --dist=lenny,sid --section=main,contrib,non-free --arch=amd64 debian/ --ignore-release-gpg
+#Updated Virtualbox
+debmirror --rsync-options="-aIL --partial --bwlimit=1024 --delete" --ignore-small-errors --nosource --passive --host=download.virtualbox.org --root=virtualbox/debian --method=http --progress --dist=lucid,maverick --section=non-free --arch=amd64 /data/raw/download.virtualbox.org/virtualbox/deb/ubuntu --ignore-release-gpg
+

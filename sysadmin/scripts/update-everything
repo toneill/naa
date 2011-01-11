@@ -1,8 +1,16 @@
 #!/bin/bash
-
-#This is just a script for cron job to run in order on the collaboration station.
-
 /usr/local/bin/update-deb-mirror
+/usr/local/bin/update-fedora-mirror 13
+/usr/local/bin/update-fedora-mirror 14
+/usr/local/bin/update-clearos-mirror
 /usr/local/bin/update-clamav
+/usr/local/bin/copy-nightly-builds
+/usr/local/bin/update-fedora-mirror 13
+/usr/local/bin/update-fedora-mirror 14
+/usr/local/bin/update-clearos-mirror
+chown -Rf root:root /data
+chmod -Rf 744 /data
+for x in `find /data -type d` ; do chmod a+x $x ; done
+rm `find /data/raw/ -name index.html`
 /usr/local/bin/sync-update-drive
 

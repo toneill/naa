@@ -5,6 +5,7 @@
 #Variables
 DATE=`date +%Y%d%m%H%m`
 LOG=/var/log/update-fedora-mirror-$DATE.log
+CURRENT_DIR=`pwd`
 
 #Variables - mirror
 LOCAL_MIRROR=/data
@@ -20,8 +21,14 @@ RPMFUSION_MIRROR=download1.rpmfusion.org
 #http://mirrors.fedoraproject.org/publiclist/Fedora/12/
 #http://rpmfusion.org/Mirrors
 
+if [ $# -lt 1 ]
+then
+	echo "no variable passed"
+	exit 1
+fi
+
 #Variables - release
-RELEASE_VERSION=12
+RELEASE_VERSION=$1
 BASE_ARCH=x86_64
 
 #Variables - directory structures
@@ -43,8 +50,8 @@ export http_proxy="http://localhost:5865"
 #Create excludes file
 echo -e $EXCLUDES > $EXCLUDES_FILE
 
-#Create directory structes, incase they don't exist already
-for x in $LOCAL_MIRROR/$FEDORA_IMAGES $LOCAL_MIRROR/$FEDORA_MAIN $LOCAL_MIRROR/$FEDORA_UPDATES $LOCAL_MIRROR/$RPMFUSION_FREE $LOCAL_MIRROR/$RPMFUSION_FREE_UPDATES $LOCAL_MIRROR/$RPMFUSION_NONFREE $LOCAL_MIRROR/$RPMFUSION_NONFREE_UPDATES
+#Create directory structures, in case they don't exist already
+for x in $LOCAL_MIRROR/$FEDORA_IMAGES $LOCAL_MIRROR/$FEDORA_MAIN $LOCAL_MIRROR/$FEDORA_UPDATES $LOCAL_MIRROR/$RPMFUSION_FREE $LOCAL_MIRROR/$RPMFUSION_FREE_UPDATES $LOCAL_MIRROR/$RPMFUSION_NONFREE $LOCAL_MIRROR/$RPMFUSION_NONFREE_UPDATES $LOCAL_MIRROR/raw
 do
 	mkdir -p $x &>/dev/null
 done
@@ -56,12 +63,16 @@ then
         echo "Fedora Images FAILED" > $LOG
 fi
 
+
+
 #Fedora main repo
 rsync -PaH --exclude-from=$EXCLUDES_FILE --numeric-ids --delete --delete-after --delay-updates rsync://$FEDORA_MIRROR/linux/releases/$RELEASE_VERSION/Everything/$BASE_ARCH/os/ $LOCAL_MIRROR/$FEDORA_MAIN/
 if [ $? -ne 0 ]
 then
 	echo "Fedora Main FAILED" > $LOG
 fi
+
+
 
 #Fedora updates repo
 rsync -PaH --exclude-from=$EXCLUDES_FILE --numeric-ids --delete --delete-after --delay-updates rsync://$FEDORA_MIRROR/linux/updates/$RELEASE_VERSION/$BASE_ARCH/ $LOCAL_MIRROR/$FEDORA_UPDATES/
@@ -70,12 +81,16 @@ then
 	echo "Fedora Updates FAILED" >> $LOG
 fi
 
+
+
 #RPMFusion free
 rsync -PaH --exclude-from=$EXCLUDES_FILE --numeric-ids --delete --delete-after --delay-updates rsync://$RPMFUSION_MIRROR/$RPMFUSION_FREE/ $LOCAL_MIRROR/$RPMFUSION_FREE/
 if [ $? -ne 0 ]
 then
 	echo "RPMFusion Free FAILED" >> $LOG
 fi
+
+
 
 #RPMFusion free updates
 rsync -PaH --exclude-from=$EXCLUDES_FILE --numeric-ids --delete --delete-after --delay-updates rsync://$RPMFUSION_MIRROR/$RPMFUSION_FREE_UPDATES/ $LOCAL_MIRROR/$RPMFUSION_FREE_UPDATES/
@@ -84,12 +99,16 @@ then
 	echo "RPMFusion Free Updates FAILED" >> $LOG
 fi
 
+
+
 #RPMFusion nonfree
 rsync -PaH --exclude-from=$EXCLUDES_FILE --numeric-ids --delete --delete-after --delay-updates rsync://$RPMFUSION_MIRROR/$RPMFUSION_NONFREE/ $LOCAL_MIRROR/$RPMFUSION_NONFREE/
 if [ $? -ne 0 ]
 then
 	echo "RPMFusion NonFree FAILED" >> $LOG
 fi
+
+
 
 #RPMFusion nonfree updates
 rsync -PaH --exclude-from=$EXCLUDES_FILE --numeric-ids --delete --delete-after --delay-updates rsync://$RPMFUSION_MIRROR/$RPMFUSION_NONFREE_UPDATES/ $LOCAL_MIRROR/$RPMFUSION_NONFREE_UPDATES/
@@ -98,14 +117,32 @@ then
 	echo "RPMFusion NonFree Updates FAILED" >> $LOG
 fi
 
+
+
 #VirtualBox
-cd $LOCAL_MIRROR
-wget --mirror --level=1 --no-parent --continue http://download.virtualbox.org/virtualbox/rpm/fedora/$RELEASE_VERSION/$BASE_ARCH/
+cd $LOCAL_MIRROR/raw
+wget --recursive --timestamping --mirror --level=2 --no-parent http://download.virtualbox.org/virtualbox/rpm/fedora/$RELEASE_VERSION/$BASE_ARCH/
+#wget --mirror --level=2 --no-parent http://download.virtualbox.org/virtualbox/rpm/fedora/$RELEASE_VERSION/$BASE_ARCH/
+#lftp -c mirror http://download.virtualbox.org/virtualbox/rpm/fedora/$RELEASE_VERSION/$BASE_ARCH/
+
+#rsync -Pa -e "ssh -p 2222" dpadmin@home.christophersmart.com:/data/repos/virtualbox /data/
+
 if [ $? -ne 0 ]
 then
 	echo "Virtualbox Update FAILED" >> $LOG
 fi
 cd $OLDPWD	
+
+#Yum rawhide (to enable autoremove)
+cd $LOCAL_MIRROR/raw
+wget --recursive --timestamping --mirror --level=2 --no-parent http://repos.fedorapeople.org/repos/james/yum-rawhide/fedora-$RELEASE_VERSION/$BASE_ARCH/
+
+if [ $? -ne 0 ]
+then
+	echo "Yum Rawhide Update FAILED" >> $LOG
+fi
+cd $OLDPWD	
+
 
 #Clean up
 rm $EXCLUDES_FILE
