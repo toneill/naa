@@ -1,7 +1,7 @@
 #!/bin/bash
 #Copyright 2008-2009 Christopher Smart, under GPLv3 (a copy included in COPYING)
 
-#Hi there. This script mounts an external device and rsyncs the ubuntu repository and clamav virus definitions.
+#Hi there. This script mounts an external device and rsyncs the ubuntu and/or fedora repository and clamav virus definitions.
 
 # Some bash things:
 # exists: -e
@@ -26,6 +26,11 @@ fi
 DISTRO=`cat /etc/lsb-release 2>/dev/null |grep DISTRIB_ID |awk -F "=" {'print $2'}`
 RELEASE=`cat /etc/lsb-release 2>/dev/null |grep DISTRIB_CODENAME |awk -F "=" {'print $2'}`
 
+FDISTRO=`cat /etc/system-release 2>/dev/null |awk -F " " {'print $1'}`
+FRELEASE=`cat /etc/system-release 2>/dev/null |awk -F " " {'print $3'}`
+
+
+  
 #To overwrite the automatically generated DISTRO above, unmask and set the following
 #DISTRO=hardy
 
@@ -39,9 +44,9 @@ NETWORK=`ifconfig eth0 |grep "inet addr" |grep -v 127.0.0.1 |awk -F ":" {'print 
 if [ -e /etc/lsb-release ]
 then
 	SYSTEM=`cat /etc/lsb-release  |grep DISTRIB_ID |awk -F "=" {'print $2'}`
-	if [ $SYSTEM != Debian -a $SYSTEM != Ubuntu ]
+	if [ $SYSTEM != Debian -a $SYSTEM != Ubuntu  $FDISTRO -a != Fedora ]
 	then
-		echo "You don't seem to be running Debian or Ubuntu. This script won't work."
+		echo "You don't seem to be running Fedora, Debian or Ubuntu. This script won't work."
 		echo "Exiting."
 		echo ""
 		exit 1
@@ -80,6 +85,27 @@ then
 	echo "Updating operating system.."
 	echo ""
 	#set up sources.lst
+#	if [ -z "`grep "/data/debs/" /etc/apt/sources.list`" ]
+#	then
+#		if [ "$DISTRO" == "Ubuntu" ]
+#		then
+#			echo "deb file:///data/debs/ubuntu $RELEASE main restricted universe multiverse" > /etc/apt/sources.list
+#			echo "deb file:///data/debs/ubuntu $RELEASE-updates main restricted universe multiverse" >> /etc/apt/sources.list
+#			echo "deb file:///data/debs/ubuntu $RELEASE-security main restricted universe multiverse" >> /etc/apt/sources.list
+#		elif [ "$DISTRO" == "Debian" ]
+#		then
+#		cho "deb file:///data/debs/debian $RELEASE main contrib non-free" > /etc/apt/sources.list
+#			echo "deb file:///data/debs/debian $RELEASE-updates main contrib non-free" >> /etc/apt/sources.list
+#			echo "deb file:///data/debs/debian $RELEASE-security main contrib non-free" >> /etc/apt/sources.list
+#		elif [ $FDISTRO" == "Fedora" ]
+ #               then
+  #                      echo "deb file:///data/fedora/linux/updates/$releasever/$basearch/
+#                        echo "deb file:///data/debs/debian $RELEASE-updates main contrib non-free" >> /etc/apt/sources.list
+#                        echo "deb file:///data/debs/debian $RELEASE-security main contrib non-free" >> /etc/apt/sources.list
+#			yum update
+ #               fi
+#	fi
+
 	if [ -z "`grep "/data/debs/" /etc/apt/sources.list`" ]
 	then
 		if [ "$DISTRO" == "Ubuntu" ]
@@ -96,22 +122,7 @@ then
 	fi
 	apt-get -qq update &>/dev/null
 	apt-get -qq -y dist-upgrade
-	apt-get -qq -y --purge autoremove &>/dev/null
-	clear
-	echo "---------------------------------------------------------"
-	echo "Looks like you want to set up a new server, let's do it.."
-	echo "----------------------------------------------------"
-	echo "Synchronising updates (this will take a long time).."
-	echo "---------------------------"
-	echo "Updating operating system.."
-
-
-	#Install apache
-	echo "--------------------------------------------------------"
-	echo "Installing web server and configuring Linux repository.."
-	apt-get -qq -y install apache2 &>/dev/null
-
-	#Set up deb archive links for clients
+        apt-get -qq -y dist-upgrade
 	cd /var/www/
 	for x in `ls $MOUNTPOINT/data/debs`
 	do
@@ -218,7 +229,7 @@ then
 	sed -i s/\"\ Uncomment\ the\ following\ to\ have\ Vim\ jump/\"\ THIS\ IS\ SET\ AT\ END\ -\ Uncomment\ the\ following\ to\ have\ Vim\ jump/g /etc/vim/vimrc
 	cat << EOF >> /etc/vim/vimrc
 	
-	" Setting jump to last position
+	# Setting jump to last position
 	if has("autocmd")
 	  au BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$")
 	    \| exe "normal! g'\"" | endif

@@ -25,7 +25,7 @@ else
 		exit 1
 	fi
 fi
-rsync -av /data/ /mnt/update-drive/data/
+rsync --delete --exclude=tmp -Pa /data /mnt/update-drive/
 sync
 umount /mnt/update-drive
 #umount `cat /proc/mounts |grep 45b28ed7-1202-4d47-bfa9-d4a4ffa4375c |awk {'print $2'}`
