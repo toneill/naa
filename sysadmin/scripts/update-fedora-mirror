@@ -8,13 +8,13 @@ LOG=/var/log/update-fedora-mirror-$DATE.log
 CURRENT_DIR=`pwd`
 
 #Variables - mirror
-LOCAL_MIRROR=/data
+LOCAL_MIRROR=/data/updates
 #Be careful of trailing fedora-enchilada directory if using another mirror instead of aarnet
 #FEDORA_MIRROR=mirror.aarnet.edu.au
 FEDORA_MIRROR=mirror.internode.on.net/fedora-enchilada
 RPMFUSION_MIRROR=download1.rpmfusion.org
 
-#Mirrors:
+#Other mirrors:
 #rsync://mirror.internode.on.net/fedora-enchilada
 #rsync://mirror.aarnet.edu.au/fedora/linux
 #rsync://download.fedora.redhat.com/fedora-enchilada
@@ -63,16 +63,12 @@ then
         echo "Fedora Images FAILED" > $LOG
 fi
 
-
-
 #Fedora main repo
 rsync -PaH --exclude-from=$EXCLUDES_FILE --numeric-ids --delete --delete-after --delay-updates rsync://$FEDORA_MIRROR/linux/releases/$RELEASE_VERSION/Everything/$BASE_ARCH/os/ $LOCAL_MIRROR/$FEDORA_MAIN/
 if [ $? -ne 0 ]
 then
 	echo "Fedora Main FAILED" > $LOG
 fi
-
-
 
 #Fedora updates repo
 rsync -PaH --exclude-from=$EXCLUDES_FILE --numeric-ids --delete --delete-after --delay-updates rsync://$FEDORA_MIRROR/linux/updates/$RELEASE_VERSION/$BASE_ARCH/ $LOCAL_MIRROR/$FEDORA_UPDATES/
@@ -81,16 +77,12 @@ then
 	echo "Fedora Updates FAILED" >> $LOG
 fi
 
-
-
 #RPMFusion free
 rsync -PaH --exclude-from=$EXCLUDES_FILE --numeric-ids --delete --delete-after --delay-updates rsync://$RPMFUSION_MIRROR/$RPMFUSION_FREE/ $LOCAL_MIRROR/$RPMFUSION_FREE/
 if [ $? -ne 0 ]
 then
 	echo "RPMFusion Free FAILED" >> $LOG
 fi
-
-
 
 #RPMFusion free updates
 rsync -PaH --exclude-from=$EXCLUDES_FILE --numeric-ids --delete --delete-after --delay-updates rsync://$RPMFUSION_MIRROR/$RPMFUSION_FREE_UPDATES/ $LOCAL_MIRROR/$RPMFUSION_FREE_UPDATES/
@@ -99,16 +91,12 @@ then
 	echo "RPMFusion Free Updates FAILED" >> $LOG
 fi
 
-
-
 #RPMFusion nonfree
 rsync -PaH --exclude-from=$EXCLUDES_FILE --numeric-ids --delete --delete-after --delay-updates rsync://$RPMFUSION_MIRROR/$RPMFUSION_NONFREE/ $LOCAL_MIRROR/$RPMFUSION_NONFREE/
 if [ $? -ne 0 ]
 then
 	echo "RPMFusion NonFree FAILED" >> $LOG
 fi
-
-
 
 #RPMFusion nonfree updates
 rsync -PaH --exclude-from=$EXCLUDES_FILE --numeric-ids --delete --delete-after --delay-updates rsync://$RPMFUSION_MIRROR/$RPMFUSION_NONFREE_UPDATES/ $LOCAL_MIRROR/$RPMFUSION_NONFREE_UPDATES/
@@ -117,15 +105,9 @@ then
 	echo "RPMFusion NonFree Updates FAILED" >> $LOG
 fi
 
-
-
 #VirtualBox
 cd $LOCAL_MIRROR/raw
 wget --recursive --timestamping --mirror --level=2 --no-parent http://download.virtualbox.org/virtualbox/rpm/fedora/$RELEASE_VERSION/$BASE_ARCH/
-#wget --mirror --level=2 --no-parent http://download.virtualbox.org/virtualbox/rpm/fedora/$RELEASE_VERSION/$BASE_ARCH/
-#lftp -c mirror http://download.virtualbox.org/virtualbox/rpm/fedora/$RELEASE_VERSION/$BASE_ARCH/
-
-#rsync -Pa -e "ssh -p 2222" dpadmin@home.christophersmart.com:/data/repos/virtualbox /data/
 
 if [ $? -ne 0 ]
 then
@@ -142,7 +124,6 @@ then
 	echo "Yum Rawhide Update FAILED" >> $LOG
 fi
 cd $OLDPWD	
-
 
 #Clean up
 rm $EXCLUDES_FILE

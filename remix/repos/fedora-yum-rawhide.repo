@@ -1,0 +1,8 @@
+# Place this file in your /etc/yum.repos.d/ directory
+
+[fedora-yum-rawhide]
+name=The rawhide version of yum rebuilt for older releases
+baseurl=http://repos.fedorapeople.org/repos/james/yum-rawhide/fedora-$releasever/$basearch/
+enabled=1
+skip_if_unavailable=1
+gpgcheck=0

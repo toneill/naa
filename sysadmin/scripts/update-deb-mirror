@@ -2,20 +2,11 @@
 
 export http_proxy="http://localhost:5865"
 
-cd /data/debs
+cd /data/updates/debs
 
 #Ubuntu
 debmirror --rsync-options="-aIL --partial --bwlimit=1024 --delete" --ignore-small-errors --nosource --passive --host=mirror.internode.on.net --root=:ubuntu --method=rsync --progress --dist=lucid,lucid-updates,lucid-security,maverick,maverick-updates,maverick-security --section=main,multiverse,restricted,universe --arch=amd64 ubuntu/ --ignore-release-gpg
 
-#ClamAV updates
-#debmirror --rsync-options="-aIL --partial --bwlimit=1024 --delete" --ignore-small-errors --nosource --passive --host=ppa.launchpad.net --root=ubuntu-clamav/ppa/ubuntu --method=http --progress --dist=lucid,lucid-updates,lucid-security --section=main --arch=amd64 ubuntu-clamav/ --ignore-release-gpg
-
-#OpenOffice.org updates
-#debmirror --rsync-options="-aIL --partial --bwlimit=1024 --delete" --ignore-small-errors --nosource --passive --host=ppa.launchpad.net --root=openoffice-pkgs/ppa/ubuntu --method=http --progress --dist=lucid --section=main --arch=amd64 ubuntu-OOo/ --ignore-release-gpg
-
-#Updated OpenJDK
-#debmirror --rsync-options="-aIL --partial --bwlimit=1024 --delete" --ignore-small-errors --nosource --passive --host=ppa.launchpad.net --root=openjdk/ppa/ubuntu --method=http --progress --dist=lucid --section=main --arch=amd64 ubuntu-openjdk/ --ignore-release-gpg
-
 #Updated Virtualbox
-debmirror --rsync-options="-aIL --partial --bwlimit=1024 --delete" --ignore-small-errors --nosource --passive --host=download.virtualbox.org --root=virtualbox/debian --method=http --progress --dist=lucid,maverick --section=non-free --arch=amd64 /data/raw/download.virtualbox.org/virtualbox/deb/ubuntu --ignore-release-gpg
+debmirror --rsync-options="-aIL --partial --bwlimit=1024 --delete" --ignore-small-errors --nosource --passive --host=download.virtualbox.org --root=virtualbox/debian --method=http --progress --dist=lucid,maverick --section=non-free --arch=amd64 /data/updates/raw/download.virtualbox.org/virtualbox/deb/ubuntu --ignore-release-gpg
 

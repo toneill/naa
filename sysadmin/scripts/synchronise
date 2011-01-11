@@ -5,14 +5,19 @@
 
 # Some bash things:
 # exists: -e
+# does NOT exist: ! -e
 # is a file: -f
+# is NOT a file: ! -f
 # is a directory: -d
-# returned value is not null: -n
-# is zero: -z
-# something is equal to something else: =
-# something is NOT equal to something else: != 
-# or -o
-# and -a
+# is NOT a directory: ! -d
+# returned value is zero: -z
+# returned value is NOT null: -n
+# string is equal to another string: =
+# string is NOT equal to another string: !=
+# integer is equal to another integer: -eq
+# integer is NOT equal to another integer: -ne
+# or: -o
+# and: -a
 
 if [ -z "`ps ax |grep [u]pdate-system`" ]
 then
@@ -29,8 +34,6 @@ RELEASE=`cat /etc/lsb-release 2>/dev/null |grep DISTRIB_CODENAME |awk -F "=" {'p
 FDISTRO=`cat /etc/system-release 2>/dev/null |awk -F " " {'print $1'}`
 FRELEASE=`cat /etc/system-release 2>/dev/null |awk -F " " {'print $3'}`
 
-
-  
 #To overwrite the automatically generated DISTRO above, unmask and set the following
 #DISTRO=hardy
 
@@ -43,13 +46,26 @@ NETWORK=`ifconfig eth0 |grep "inet addr" |grep -v 127.0.0.1 |awk -F ":" {'print 
 #Check that this is being run on a system we support (currently either Debian or Ubuntu)
 if [ -e /etc/lsb-release ]
 then
-	SYSTEM=`cat /etc/lsb-release  |grep DISTRIB_ID |awk -F "=" {'print $2'}`
-	if [ $SYSTEM != Debian -a $SYSTEM != Ubuntu  $FDISTRO -a != Fedora ]
+	SYSTEM="`cat /etc/lsb-release |grep DISTRIB_ID |awk -F "=" {'print $2'}`"
+	echo $SYSTEM
+	#Check what we're running
+	if [ $SYSTEM != Debian -a $SYSTEM != Ubuntu ]
 	then
-		echo "You don't seem to be running Fedora, Debian or Ubuntu. This script won't work."
+		echo "You don't seem to be running a supported distro. This script won't work."
 		echo "Exiting."
 		echo ""
-		exit 1
+	#	exit 1
+	fi
+elif [ -e /etc/redhat-release ]
+then
+	SYSTEM="`cat /etc/redhat-release |awk {'print $1'}`"
+	if [ "$SYSTEM" != "Fedora" ]
+	then
+		echo "You don't seem to be running a supported distro. This script won't work."
+		echo "not fedora"
+                echo "Exiting."
+                echo ""
+        #        exit 1
 	fi
 else
 	echo "Hmm... I can't tell what Linux you're running, exiting."
@@ -69,7 +85,12 @@ then
 
 	echo "----------------------------------------------------"
 	echo "Synchronising updates (this will take a long time).."
-	rsync -a $MOUNTPOINT/data /
+	if [ ! -d /data ]
+	then
+		echo "/data does not exist. Exiting."
+		exit 1
+	fi
+	rsync -a $MOUNTPOINT/data/updates /data/
 
 	if [ $? == 0 ]
 	then
@@ -256,7 +277,7 @@ else
 	#We want to run the sync anyway
 	echo "-----------------------"
 	echo "Synchronising updates.."
-	rsync -a $MOUNTPOINT/data /
+	rsync -a --delete $MOUNTPOINT/data/updates /data/
 
 	if [ $? == 0 ]
 	then
@@ -274,8 +295,8 @@ if [ -n "`dpkg -l |grep apache2`" -a -d "/var/www" ]
 	then
 		echo "-----------------------------------"
 		echo "Updating online virus definitions.."
-		rsync -a /data/clamav/db/*cvd /var/www/
-	if [ $? == 0 ]
+		rsync -a /data/updates/clamav/db/*cvd /var/www/
+		if [ $? == 0 ]
 		then
 			echo "Copy ClamAV definitions to Apache - SUCCESS" >> $COMPLETEFILE
 		else

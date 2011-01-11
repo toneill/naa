@@ -1,4 +1,5 @@
 #!/bin/bash
+/usr/local/bin/update-scripts
 /usr/local/bin/update-deb-mirror
 /usr/local/bin/update-fedora-mirror 13
 /usr/local/bin/update-fedora-mirror 14
@@ -8,9 +9,9 @@
 /usr/local/bin/update-fedora-mirror 13
 /usr/local/bin/update-fedora-mirror 14
 /usr/local/bin/update-clearos-mirror
-chown -Rf root:root /data
-chmod -Rf 744 /data
-for x in `find /data -type d` ; do chmod a+x $x ; done
-rm `find /data/raw/ -name index.html`
+chown -Rf root:root /data/updates
+chmod -Rf 744 /data/updates
+for x in `find /data/updates -type d` ; do chmod a+x $x ; done
+rm `find /data/updates/raw/ -name index.html`
 /usr/local/bin/sync-update-drive
 
