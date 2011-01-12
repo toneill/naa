@@ -1,5 +1,5 @@
 
-all: ISMCompliance.html ISM_MissingCompliance.html
+all: ISM_Compliance.html ISM_MissingCompliance.html
 
 ISM_Compliance.html: SSP.xsl sample-ssp.xml
 	java -jar saxon-6.5.5.jar "Australian Government Information Security Manual (ISM).xml"  SSP.xsl > $@
