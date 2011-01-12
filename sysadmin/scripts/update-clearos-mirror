@@ -1,0 +1,12 @@
+#!/bin/bash
+
+#This script rsyncs a local ClearOS mirror
+
+#Variables - mirror
+LOCAL_MIRROR=/data/updates
+
+#Command summary
+mkdir -p $LOCAL_MIRROR/clearos/enterprise 2>/dev/null
+rsync -rltv --delete --progress sync.clearfoundation.com::clearos/enterprise/5.2 $LOCAL_MIRROR/clearos/enterprise/
+rsync -rltv --delete --progress sync.clearfoundation.com::clearcentos $LOCAL_MIRROR/clearcentos/
+

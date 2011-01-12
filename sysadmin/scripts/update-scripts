@@ -1,0 +1,22 @@
+#!/bin/bash
+if [ $EUID -ne 0 ]
+then
+	echo "You must be root. Exiting."
+	exit 1
+fi
+
+cd /usr/local/bin/
+if [ -e naa ]
+then
+        if [ -d naa ]
+        then
+                cd naa
+                git pull origin master
+                cd ..
+        fi
+else
+        git clone git://github.com/csmart/naa.git
+fi
+
+cp naa/sysadmin/scripts/* .
+chmod a+x *

@@ -9,7 +9,7 @@
 #Execute the synchronise script from the local machine
 
 #This script should only ever set variables, mount the drive, copy the script and execute it.
-#Everything else should be done in the synchronise script, so theoreticallty file should never change (except when using a new update drive).
+#Everything else should be done in the synchronise script, so theoreticallty this file should never change (except when using a new update drive).
 
 #If the physical drive changes, all you need to do is update DEVICEUUID variable.
 #Specify the UUID of the external unit (get with `sudo vol_id -u /dev/sdXX`) and mountpoint.

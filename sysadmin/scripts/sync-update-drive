@@ -10,7 +10,7 @@ else
 	mount /mnt/update-drive
 	
 	# Check to see if everything mounted OK
-	if [ $? -gt 0 ]
+	if [ $? -ne 0 ]
 	then 
 		echo "Failed to mount"
 		#Send an email
@@ -25,7 +25,8 @@ else
 		exit 1
 	fi
 fi
-rsync -av /data/ /mnt/update-drive/data/
+mkdir /mnt/update-drive/data/ 2>/dev/null
+rsync --delete --exclude=tmp -Pa /data/updates /mnt/update-drive/data/
+cp /usr/local/bin/naa/sysadmin/scripts/* /mnt/update-drive/scripts/
 sync
 umount /mnt/update-drive
-#umount `cat /proc/mounts |grep 45b28ed7-1202-4d47-bfa9-d4a4ffa4375c |awk {'print $2'}`
