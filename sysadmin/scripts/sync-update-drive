@@ -26,7 +26,7 @@ else
 	fi
 fi
 mkdir /mnt/update-drive/data/ 2>/dev/null
-rsync --delete --exclude=debs --exclude=tmp -Pa /data/updates /mnt/update-drive/data/
+rsync --delete --exclude=updates/debs --exclude=tmp -Pa /data/updates /mnt/update-drive/data/
 cp /usr/local/bin/naa/sysadmin/scripts/* /mnt/update-drive/scripts/
 sync
 umount /mnt/update-drive
