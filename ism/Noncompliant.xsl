@@ -50,7 +50,7 @@ The format of the SSP XML input is:
       <initial></initial>
       <effectofalternate>
       </effectofalternate>
-      <residuallikelyhood>Rare</residuallikelyhood>
+      <residuallikelihood>Rare</residuallikelihood>
       <residualconsequence>Minor</residualconsequence>
       <residualrisk>Low</residualrisk>
     </risk>
@@ -91,7 +91,7 @@ This is a sample ssp.xml input to the document.
       <initial>This information needs to be protect</initial>
       <effectofalternate>The limited physical and logical scope of the network
       </effectofalternate>
-      <residuallikelyhood>Rare</residuallikelyhood>
+      <residuallikelihood>Rare</residuallikelihood>
       <residualconsequence>Minor</residualconsequence>
       <residualrisk>Low</residualrisk>
     </risk>
@@ -364,7 +364,7 @@ Licence - Creative Commons Attribution version 3 as per current AGIMO guidance
 <xsl:template match="risk">
 <tr><td>Initial Risk</td><td colspan="5"><xsl:value-of select="initial"/></td></tr>
 <tr><td>Effect of Alternate Mitigation</td><td colspan="5"><xsl:value-of select="effectofalternate"/></td></tr>
-<tr><td>Residual Likelyhood</td><td><xsl:value-of select="residuallikelyhood"/></td>
+<tr><td>Residual likelihood</td><td><xsl:value-of select="residuallikelihood"/></td>
 <td>Residual Consequence</td><td><xsl:value-of select="residualconsequence"/></td>
 <td>Residual Risk</td><td><xsl:value-of select="residualrisk"/></td></tr>
 </xsl:template>

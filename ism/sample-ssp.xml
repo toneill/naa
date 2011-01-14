@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <controls>
   <compliant chapter="Australian Government Information Security Manual" revision="201011">As per IT Security Policy</compliant>
   <compliant chapter="Information Security in Government" revision="201011">As per IT Security Policy</compliant>
@@ -16,7 +16,7 @@
       <initial>This information needs to be protect</initial>
       <effectofalternate>The limited physical and logical scope of the network
       </effectofalternate>
-      <residuallikelyhood>Rare</residuallikelyhood>
+      <residuallikelihood>Rare</residuallikelihood>
       <residualconsequence>Minor</residualconsequence>
       <residualrisk>Low</residualrisk>
     </risk>
