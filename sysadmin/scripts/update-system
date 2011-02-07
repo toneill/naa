@@ -70,6 +70,10 @@ fi
 
 #We're going to grab the device by UUID and convert to SCSI syntax.
 export DEVICE="`ls -l /dev/disk/by-uuid/$DEVICEUUID 2>/dev/null |awk {'print $11'} |sed s/"..\/..\/"/"\/dev\/"/`"
+if [ -z "$DEVICE" ]
+then
+	export DEVICE="`ls -l /dev/disk/by-uuid/$DEVICEUUID 2>/dev/null |awk {'print $10'} |sed s/"..\/..\/"/"\/dev\/"/`"
+fi
 
 #Where the Device is mounted, so we can check if it's running from there later
 MOUNTED="`df -h |grep $DEVICE 2>/dev/null |awk {'print $6'}`"
