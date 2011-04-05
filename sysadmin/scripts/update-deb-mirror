@@ -10,3 +10,6 @@ debmirror --rsync-options="-aIL --partial --bwlimit=1024 --delete" --ignore-smal
 #Updated Virtualbox
 debmirror --rsync-options="-aIL --partial --bwlimit=1024 --delete" --ignore-small-errors --nosource --passive --host=download.virtualbox.org --root=virtualbox/debian --method=http --progress --dist=lucid,maverick --section=non-free --arch=amd64 /data/updates/raw/download.virtualbox.org/virtualbox/deb/ubuntu --ignore-release-gpg
 
+#Debian
+debmirror --rsync-options="-aIL --partial --bwlimit=1024 --delete" --ignore-small-errors --nosource --passive --host=mirror.internode.on.net --root=:debian --method=rsync --progress --dist=squeeze,squeeze-updates --section=main,non-free --arch=kfreebsd-amd64 debian/ --ignore-release-gpg
+
