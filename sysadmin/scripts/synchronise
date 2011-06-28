@@ -19,6 +19,7 @@
 # or: -o
 # and: -a
 
+
 if [ -z "`ps ax |grep [u]pdate-system`" ]
 then
 	echo "Do not run this script directly, it is called by 'update-system'"
@@ -77,7 +78,7 @@ fi
 clear
 
 #Check if this is a new install
-if [ "$STATUS" = "new" ]
+if [ "$STATUS" = "new" 
 then
 	clear
 	echo "---------------------------------------------------------"
@@ -106,27 +107,6 @@ then
 	echo "Updating operating system.."
 	echo ""
 	#set up sources.lst
-#	if [ -z "`grep "/data/debs/" /etc/apt/sources.list`" ]
-#	then
-#		if [ "$DISTRO" == "Ubuntu" ]
-#		then
-#			echo "deb file:///data/debs/ubuntu $RELEASE main restricted universe multiverse" > /etc/apt/sources.list
-#			echo "deb file:///data/debs/ubuntu $RELEASE-updates main restricted universe multiverse" >> /etc/apt/sources.list
-#			echo "deb file:///data/debs/ubuntu $RELEASE-security main restricted universe multiverse" >> /etc/apt/sources.list
-#		elif [ "$DISTRO" == "Debian" ]
-#		then
-#		cho "deb file:///data/debs/debian $RELEASE main contrib non-free" > /etc/apt/sources.list
-#			echo "deb file:///data/debs/debian $RELEASE-updates main contrib non-free" >> /etc/apt/sources.list
-#			echo "deb file:///data/debs/debian $RELEASE-security main contrib non-free" >> /etc/apt/sources.list
-#		elif [ $FDISTRO" == "Fedora" ]
- #               then
-  #                      echo "deb file:///data/fedora/linux/updates/$releasever/$basearch/
-#                        echo "deb file:///data/debs/debian $RELEASE-updates main contrib non-free" >> /etc/apt/sources.list
-#                        echo "deb file:///data/debs/debian $RELEASE-security main contrib non-free" >> /etc/apt/sources.list
-#			yum update
- #               fi
-#	fi
-
 	if [ -z "`grep "/data/debs/" /etc/apt/sources.list`" ]
 	then
 		if [ "$DISTRO" == "Ubuntu" ]
@@ -136,11 +116,32 @@ then
 			echo "deb file:///data/debs/ubuntu $RELEASE-security main restricted universe multiverse" >> /etc/apt/sources.list
 		elif [ "$DISTRO" == "Debian" ]
 		then
-			echo "deb file:///data/debs/debian $RELEASE main contrib non-free" > /etc/apt/sources.list
+	                echo "deb file:///data/debs/debian $RELEASE main contrib non-free" > /etc/apt/sources.list
 			echo "deb file:///data/debs/debian $RELEASE-updates main contrib non-free" >> /etc/apt/sources.list
 			echo "deb file:///data/debs/debian $RELEASE-security main contrib non-free" >> /etc/apt/sources.list
-		fi
+		elif [ "$FDISTRO" == "Fedora" ]
+               then
+                       echo "deb file:///data/fedora/linux/updates/$releasever/$basearch/"
+                       echo "deb file:///data/debs/debian $RELEASE-updates main contrib non-free" >> /etc/apt/sources.list
+                       echo "deb file:///data/debs/debian $RELEASE-security main contrib non-free" >> /etc/apt/sources.list
+		       yum update
+                fi
 	fi
+
+#	if [ -z "`grep "/data/debs/" /etc/apt/sources.list`" ]
+#	then
+#		if [ "$DISTRO" == "Ubuntu" ]
+#		then
+#			echo "deb file:///data/debs/ubuntu $RELEASE main restricted universe multiverse" > /etc/apt/sources.list
+#			echo "deb file:///data/debs/ubuntu $RELEASE-updates main restricted universe multiverse" >> /etc/apt/sources.list
+#			echo "deb file:///data/debs/ubuntu $RELEASE-security main restricted universe multiverse" >> /etc/apt/sources.list
+#		elif [ "$DISTRO" == "Debian" ]
+#		then
+#			echo "deb file:///data/debs/debian $RELEASE main contrib non-free" > /etc/apt/sources.list
+#			echo "deb file:///data/debs/debian $RELEASE-updates main contrib non-free" >> /etc/apt/sources.list
+#			echo "deb file:///data/debs/debian $RELEASE-security main contrib non-free" >> /etc/apt/sources.list
+#		fi
+#	fi
 	apt-get -qq update &>/dev/null
 	apt-get -qq -y dist-upgrade
         apt-get -qq -y dist-upgrade
@@ -329,11 +330,11 @@ fi
 echo "-----------------------------"
 echo "Checking ClamAV definitions.."
 #Testing if the date on the ClamAV definitions are less than three days old. If so, good. If not, print check.
-if [ `stat -c %Y /data/clamav/db/daily.cvd` -lt `date +%s --date "2 days ago"` ]
+if [ `stat -c %Y /data/updates/clamav/db/daily.cvd` -lt `date +%s --date "2 days ago"` ]
 	then
 		echo "Today is `date +%Y-%m-%d`."
-		echo "Latest daily.cvd is dated `stat -c %y /data/clamav/db/daily.cvd |awk {'print $1'}`."
-		echo "Latest main.cvd is dated `stat -c %y /data/clamav/db/main.cvd |awk {'print $1'}`."
+		echo "Latest daily.cvd is dated `stat -c %y /data/updates/clamav/db/daily.cvd |awk {'print $1'}`."
+		echo "Latest main.cvd is dated `stat -c %y /data/updates/clamav/db/main.cvd |awk {'print $1'}`."
 		echo "Please compare the dates."
 		echo ""
 		echo "** HIT ENTER TO CONTINUE **"
@@ -344,18 +345,18 @@ if [ `stat -c %Y /data/clamav/db/daily.cvd` -lt `date +%s --date "2 days ago"` ]
 fi
 
 #If this is marlin, backup the Amanda config files
-if [ `hostname` == "marlin" -o `hostname -f` == "marlin.dr.lan" ]
-	then
-		echo "--------------------------------"
-		echo "Backing up Amanda config files.."
-		mkdir -p $MOUNTPOINT/backup/marlin/etc/ 2>/dev/null
-		rsync -a /etc/amanda* $MOUNTPOINT/backup/marlin/etc/
-		rsync -a /usr/local/bin $MOUNTPOINT/backup/marlin/usr/local/
-		echo "--------------------------------"
-		echo "Amanda config backup - SUCCESS" >> $COMPLETEFILE
-	else
-		echo "-----------------------------"
-fi
+#if [ `hostname` == "marlin" -o `hostname -f` == "marlin.dr.lan" ]
+#	then
+#		echo "--------------------------------"
+#		echo "Backing up Amanda config files.."
+#		mkdir -p $MOUNTPOINT/backup/marlin/etc/ 2>/dev/null
+#		rsync -a /etc/amanda* $MOUNTPOINT/backup/marlin/etc/
+#		rsync -a /usr/local/bin $MOUNTPOINT/backup/marlin/usr/local/
+#		echo "--------------------------------"
+#		echo "Amanda config backup - SUCCESS" >> $COMPLETEFILE
+#	else
+#		echo "-----------------------------"
+#fi
 
 #Clean up error file - keeping these as logs now
 #rm $ERRORFILE 2>/dev/null
