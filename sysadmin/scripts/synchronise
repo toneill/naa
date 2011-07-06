@@ -78,7 +78,7 @@ fi
 clear
 
 #Check if this is a new install
-if [ "$STATUS" = "new" 
+if [ "$STATUS" = "new" ]
 then
 	clear
 	echo "---------------------------------------------------------"
@@ -107,23 +107,23 @@ then
 	echo "Updating operating system.."
 	echo ""
 	#set up sources.lst
-	if [ -z "`grep "/data/debs/" /etc/apt/sources.list`" ]
+	if [ -z "`grep "/data/updates/debs/" /etc/apt/sources.list`" ]
 	then
 		if [ "$DISTRO" == "Ubuntu" ]
 		then
-			echo "deb file:///data/debs/ubuntu $RELEASE main restricted universe multiverse" > /etc/apt/sources.list
-			echo "deb file:///data/debs/ubuntu $RELEASE-updates main restricted universe multiverse" >> /etc/apt/sources.list
-			echo "deb file:///data/debs/ubuntu $RELEASE-security main restricted universe multiverse" >> /etc/apt/sources.list
+			echo "deb file:///data/updates/debs/ubuntu $RELEASE main restricted universe multiverse" > /etc/apt/sources.list
+			echo "deb file:///data/updates/debs/ubuntu $RELEASE-updates main restricted universe multiverse" >> /etc/apt/sources.list
+			echo "deb file:///data/updates/debs/ubuntu $RELEASE-security main restricted universe multiverse" >> /etc/apt/sources.list
 		elif [ "$DISTRO" == "Debian" ]
 		then
-	                echo "deb file:///data/debs/debian $RELEASE main contrib non-free" > /etc/apt/sources.list
-			echo "deb file:///data/debs/debian $RELEASE-updates main contrib non-free" >> /etc/apt/sources.list
-			echo "deb file:///data/debs/debian $RELEASE-security main contrib non-free" >> /etc/apt/sources.list
+	                echo "deb file:///data/updates/debs/debian $RELEASE main contrib non-free" > /etc/apt/sources.list
+			echo "deb file:///data/updates/debs/debian $RELEASE-updates main contrib non-free" >> /etc/apt/sources.list
+			echo "deb file:///data/updates/debs/debian $RELEASE-security main contrib non-free" >> /etc/apt/sources.list
 		elif [ "$FDISTRO" == "Fedora" ]
                then
-                       echo "deb file:///data/fedora/linux/updates/$releasever/$basearch/"
-                       echo "deb file:///data/debs/debian $RELEASE-updates main contrib non-free" >> /etc/apt/sources.list
-                       echo "deb file:///data/debs/debian $RELEASE-security main contrib non-free" >> /etc/apt/sources.list
+                       echo "deb file:///data/updates/fedora/linux/updates/$releasever/$basearch/"
+                       echo "deb file:///data/updates/debs/debian $RELEASE-updates main contrib non-free" >> /etc/apt/sources.list
+                       echo "deb file:///data/updates/debs/debian $RELEASE-security main contrib non-free" >> /etc/apt/sources.list
 		       yum update
                 fi
 	fi
